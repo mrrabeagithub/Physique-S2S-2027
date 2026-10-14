@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Physique S2S — Le Vecteur Position OM = r</title>
+    <!-- Tailwind CSS for modern responsive UI -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+                        math: ['Cambria Math', 'Times New Roman', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styling for proper mathematical vector arrows above letters */
+        .vec {
+            position: relative;
+            display: inline-block;
+            font-style: italic;
+            font-family: 'Cambria Math', 'Times New Roman', serif;
+            padding-top: 0.15em;
+        }
+        .vec::after {
+            content: "→";
+            position: absolute;
+            top: -0.42em;
+            left: 50%;
+            transform: translateX(-50%) scale(0.75);
+            font-style: normal;
+            font-weight: bold;
+            line-height: 1;
+        }
+        .vec-wide {
+            position: relative;
+            display: inline-block;
+            font-style: italic;
+            font-family: 'Cambria Math', 'Times New Roman', serif;
+            padding-top: 0.15em;
+        }
+        .vec-wide::after {
+            content: "⟶";
+            position: absolute;
+            top: -0.45em;
+            left: 50%;
+            transform: translateX(-50%) scaleX(0.95) scaleY(0.75);
+            font-style: normal;
+            font-weight: bold;
+            line-height: 1;
+        }
+
+        /* Custom Scrollbars & Range Sliders */
+        input[type="range"] {
+            accent-color: #38bdf8;
+        }
+        canvas {
+            touch-action: none; /* Prevent mobile scrolling while dragging point M */
+            user-select: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col selection:bg-sky-500 selection:text-white transition-colors duration-200">
+
+    <!-- ================= TOP NAVIGATION & PEDAGOGICAL HEADER ================= -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-30 px-4 py-3">
+        <div class="max-w-[1600px] mx-auto flex flex-wrap items-center justify-between gap-4">
+            <!-- Brand & Author Subtitle -->
+            <div>
+                <h1 class="text-lg md:text-xl font-bold tracking-tight text-white">Vecteur Position &amp; Cinématique 2D</h1>
+                <p class="text-xs font-medium text-amber-300 mt-0.5">by Rabih A.G. Physics Teacher/Solar &amp; Smart Syst. Tech.</p>
+            </div>
+
+            <!-- Mode Switcher & Quick Controls -->
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                <!-- Mode Switcher -->
+                <div class="inline-flex rounded-xl bg-slate-950 p-1 border border-slate-800">
+                    <button id="btnModeStatic" onclick="setSimMode('static')" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-sky-500 text-slate-950 shadow">
+                        📍 Mode Statique (Point M libre)
+                    </button>
+                    <button id="btnModeDynamic" onclick="setSimMode('dynamic')" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-400 hover:text-white">
+                        🚀 Mode Dynamique <span class="vec">r</span>(t) (RK4)
+                    </button>
+                </div>
+
+                <!-- Theme Toggle -->
+                <button id="btnTheme" onclick="toggleTheme()" title="Changer le thème Clair/Sombre" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+                    <span id="themeIcon">☀️</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ================= MAIN WORKSPACE ================= -->
+    <main class="flex-1 max-w-[1600px] w-full mx-auto p-3 sm:p-5 grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+        <!-- LEFT / CENTER COLUMN: INTERACTIVE 2D CARTESIAN PLANE (7 cols on large screens) -->
+        <section class="lg:col-span-7 flex flex-col gap-3">
+            <!-- Canvas Card -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl flex flex-col flex-1 min-h-[440px] sm:min-h-[540px] relative">
+                
+                <!-- Top Floating HUD inside Canvas -->
+                <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 bg-slate-950/70 border-b border-slate-800/80 text-xs">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <span class="font-semibold text-slate-300 flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-sky-400 inline-block"></span>
+                            Plan Cartésien <span class="font-math">(O ; <span class="vec">i</span>, <span class="vec">j</span>)</span>
+                        </span>
+                        <span class="text-slate-400 hidden sm:inline">|</span>
+                        <span id="canvasHint" class="text-sky-400 font-medium">💡 Cliquez ou glissez le point M(x ; y) dans le plan</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <!-- Snap to Grid Selector -->
+                        <label class="flex items-center gap-1.5 cursor-pointer text-slate-300">
+                            <span>Aimantation (Grille):</span>
+                            <select id="snapSelect" onchange="updateSnapMode()" class="bg-slate-800 text-sky-300 border border-slate-700 rounded-lg px-2 py-0.5 text-xs font-mono focus:outline-none focus:border-sky-500">
+                                <option value="0.5" selected>0.5 m</option>
+                                <option value="1">1.0 m (Entiers)</option>
+                                <option value="0.1">0.1 m (Précis)</option>
+                                <option value="0">Libre (Continu)</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Interactive HTML5 Canvas -->
+                <div class="relative flex-1 w-full bg-slate-950">
+                    <canvas id="cartesianCanvas" class="w-full h-full block cursor-crosshair"></canvas>
+
+                    <!-- Floating Legend Overlay on Bottom-Left of Canvas -->
+                    <div class="absolute bottom-3 left-3 bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-xl px-3 py-2 text-xs flex flex-wrap items-center gap-3 shadow-lg pointer-events-none">
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3 h-1 bg-sky-400 inline-block rounded"></span>
+                            <span class="font-math"><span class="vec-wide">OM</span> = <span class="vec">r</span></span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3 h-1 bg-rose-500 inline-block rounded"></span>
+                            <span class="font-math">x<span class="vec">i</span></span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3 h-1 bg-emerald-400 inline-block rounded"></span>
+                            <span class="font-math">y<span class="vec">j</span></span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3 h-1 bg-amber-400 inline-block rounded"></span>
+                            <span>Vecteurs unitaires <span class="font-math">(<span class="vec">i</span>, <span class="vec">j</span>)</span></span>
+                        </div>
+                    </div>
+
+                    <!-- Quick Preset Points Overlay on Top-Right of Canvas -->
+                    <div id="staticPresetsBar" class="absolute top-3 right-3 flex flex-wrap gap-1.5">
+                        <button onclick="setPointCoordinates(4, 3)" class="px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 text-slate-200 border border-slate-700 text-xs font-mono shadow transition">M(4 ; 3)</button>
+                        <button onclick="setPointCoordinates(-5, 4)" class="px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 text-slate-200 border border-slate-700 text-xs font-mono shadow transition">M(-5 ; 4)</button>
+                        <button onclick="setPointCoordinates(-3, -6)" class="px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 text-slate-200 border border-slate-700 text-xs font-mono shadow transition">M(-3 ; -6)</button>
+                        <button onclick="setPointCoordinates(6, 0)" class="px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 text-slate-200 border border-slate-700 text-xs font-mono shadow transition">Sur Ox (6 ; 0)</button>
+                        <button onclick="setPointCoordinates(0, -5)" class="px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 text-slate-200 border border-slate-700 text-xs font-mono shadow transition">Sur Oy (0 ; -5)</button>
+                    </div>
+                </div>
+
+                <!-- Bottom Visual Toggles Bar -->
+                <div class="px-4 py-2.5 bg-slate-900 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
+                    <div class="flex flex-wrap items-center gap-4">
+                        <label class="flex items-center gap-1.5 cursor-pointer select-none">
+                            <input type="checkbox" id="chkProjections" checked onchange="requestRedraw()" class="rounded text-sky-500 focus:ring-0">
+                            <span>Projections orthogonales <span class="text-slate-400">(Pointillés)</span></span>
+                        </label>
+                        <label class="flex items-center gap-1.5 cursor-pointer select-none">
+                            <input type="checkbox" id="chkComponents" checked onchange="requestRedraw()" class="rounded text-sky-500 focus:ring-0">
+                            <span>Composantes vectorielles <span class="font-math">(x<span class="vec">i</span>, y<span class="vec">j</span>)</span></span>
+                        </label>
+                        <label class="flex items-center gap-1.5 cursor-pointer select-none">
+                            <input type="checkbox" id="chkTriangle" onchange="requestRedraw()" class="rounded text-sky-500 focus:ring-0">
+                            <span>Règle de Chasles <span class="text-slate-400">(Triangle bout-à-bout)</span></span>
+                        </label>
+                        <label class="flex items-center gap-1.5 cursor-pointer select-none">
+                            <input type="checkbox" id="chkAngle" checked onchange="requestRedraw()" class="rounded text-sky-500 focus:ring-0">
+                            <span>Angle polaire <span class="font-math">θ</span></span>
+                        </label>
+                    </div>
+                    <button onclick="setPointCoordinates(0, 0)" class="text-xs text-slate-400 hover:text-sky-400 font-medium transition">
+                        ↺ Remettre à l'origine O(0 ; 0)
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- RIGHT COLUMN: LIVE ALGEBRAIC EXPRESSION & CONTROLS (5 cols on large screens) -->
+        <aside class="lg:col-span-5 flex flex-col gap-4">
+
+            <!-- 1. HERO CARD: ALGEBRAIC POSITION VECTOR EXPRESSION IN TERMS OF i AND j -->
+            <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-sky-950/40 border-2 border-sky-500/40 rounded-2xl p-5 shadow-xl relative overflow-hidden">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold uppercase tracking-wider text-sky-400 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-sky-400 animate-pulse"></span>
+                        Expression du Vecteur Position
+                    </span>
+                    <span id="quadrantBadge" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700">
+                        Quadrant I
+                    </span>
+                </div>
+
+                <!-- General Formula Reminder -->
+                <div class="text-xs text-slate-400 mb-3">
+                    Dans le repère orthonormé <span class="font-math text-slate-200">(O ; <span class="vec">i</span>, <span class="vec">j</span>)</span>, tout point <span class="font-mono text-sky-300" id="inlineCoordTitle">M(4.0 ; 3.0)</span> est repéré par :
+                </div>
+
+                <!-- Dynamic Main Vector Equation Box -->
+                <div class="bg-slate-950/90 border border-slate-800 rounded-xl p-4 flex flex-col items-center justify-center my-2 shadow-inner">
+                    <div class="text-xs text-slate-500 font-mono mb-1">Forme symbolique : <span class="font-math"><span class="vec-wide">OM</span> = <span class="vec">r</span> = x<sub>M</sub> <span class="vec">i</span> + y<sub>M</sub> <span class="vec">j</span></span></div>
+                    <div id="vectorEquationDisplay" class="text-2xl sm:text-3xl font-bold tracking-wide text-center py-1 font-math">
+                        <!-- Populated dynamically by JS -->
+                    </div>
+                    <div id="strictZeroEquationDisplay" class="text-xs text-slate-400 font-mono mt-1">
+                        <!-- Shows explicit 0i or 0j form when one coordinate is zero -->
+                    </div>
+                </div>
+
+                <!-- Coordinate & Column Notation Grid -->
+                <div class="grid grid-cols-2 gap-3 mt-3">
+                    <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3 flex items-center justify-between">
+                        <div>
+                            <div class="text-[11px] text-slate-400 uppercase font-semibold">Coordonnées du point</div>
+                            <div id="pointCoordReadout" class="text-base sm:text-lg font-mono font-bold text-white mt-0.5">M ( 4.0 ; 3.0 )</div>
+                        </div>
+                        <span class="text-xs text-slate-500 font-mono">m</span>
+                    </div>
+
+                    <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3 flex items-center justify-between">
+                        <div class="text-[11px] text-slate-400 uppercase font-semibold">Notation matricielle</div>
+                        <div class="flex items-center gap-1 font-mono text-sm font-bold">
+                            <span class="font-math text-sky-400 mr-1"><span class="vec-wide">OM</span> =</span>
+                            <div class="border-l-2 border-r-2 border-slate-400 px-2 py-0.5 rounded-sm leading-tight text-center">
+                                <div id="colX" class="text-rose-400">x = 4.0</div>
+                                <div id="colY" class="text-emerald-400">y = 3.0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. FINE-TUNING SLIDERS (STATIC MODE) OR RK4 KINEMATICS CONTROLS (DYNAMIC MODE) -->
+            <div id="staticControlsCard" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300">Réglage Précis des Coordonnées</h2>
+                    <span class="text-xs text-slate-400 font-mono">Unité SI : mètre (m)</span>
+                </div>
+
+                <div class="space-y-4">
+                    <!-- X Coordinate Slider & Input -->
+                    <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label for="sliderX" class="text-xs font-semibold text-rose-400 flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span>
+                                Abscisse <span class="font-math text-sm">x<sub>M</sub></span> (selon <span class="font-math"><span class="vec">i</span></span>)
+                            </label>
+                            <div class="flex items-center gap-1">
+                                <input type="number" id="inputX" step="0.5" min="-10" max="10" value="4"
+                                    oninput="onNumericInputChange('x', this.value)"
+                                    class="w-20 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-right font-mono text-sm text-rose-400 font-bold focus:outline-none focus:border-rose-500">
+                                <span class="text-xs text-slate-400 font-mono">m</span>
+                            </div>
+                        </div>
+                        <input type="range" id="sliderX" min="-10" max="10" step="0.1" value="4"
+                            oninput="onSliderChange('x', this.value)"
+                            class="w-full h-2 bg-slate-800 rounded-lg cursor-pointer accent-rose-500">
+                    </div>
+
+                    <!-- Y Coordinate Slider & Input -->
+                    <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label for="sliderY" class="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block"></span>
+                                Ordonnée <span class="font-math text-sm">y<sub>M</sub></span> (selon <span class="font-math"><span class="vec">j</span></span>)
+                            </label>
+                            <div class="flex items-center gap-1">
+                                <input type="number" id="inputY" step="0.5" min="-10" max="10" value="3"
+                                    oninput="onNumericInputChange('y', this.value)"
+                                    class="w-20 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-right font-mono text-sm text-emerald-400 font-bold focus:outline-none focus:border-emerald-500">
+                                <span class="text-xs text-slate-400 font-mono">m</span>
+                            </div>
+                        </div>
+                        <input type="range" id="sliderY" min="-10" max="10" step="0.1" value="3"
+                            oninput="onSliderChange('y', this.value)"
+                            class="w-full h-2 bg-slate-800 rounded-lg cursor-pointer accent-emerald-400">
+                    </div>
+                </div>
+            </div>
+
+            <!-- DYNAMIC MODE CONTROLS CARD (Hidden in Static Mode) -->
+            <div id="dynamicControlsCard" class="hidden bg-slate-900 border border-indigo-500/40 rounded-2xl p-4 shadow-lg">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <h2 class="text-sm font-bold uppercase tracking-wider text-indigo-400">Cinématique <span class="vec">r</span>(t) — Intégrateur RK4</h2>
+                        <p class="text-xs text-slate-400">Équations horaires paramétriques x(t) et y(t)</p>
+                    </div>
+                    <span id="timeReadout" class="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 font-mono text-xs text-sky-400 font-bold">
+                        t = 0.00 s
+                    </span>
+                </div>
+
+                <!-- Motion Law Selector -->
+                <div class="grid grid-cols-3 gap-2 mb-3">
+                    <button id="lawBtn_circle" onclick="setDynamicLaw('circle')" class="px-2.5 py-2 rounded-xl text-xs font-semibold border transition bg-indigo-600 text-white border-indigo-400">
+                        🔄 Circulaire / SHM
+                    </button>
+                    <button id="lawBtn_lissajous" onclick="setDynamicLaw('lissajous')" class="px-2.5 py-2 rounded-xl text-xs font-semibold border transition bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700">
+                        ♾️ Lissajous 2D
+                    </button>
+                    <button id="lawBtn_projectile" onclick="setDynamicLaw('projectile')" class="px-2.5 py-2 rounded-xl text-xs font-semibold border transition bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700">
+                        ☄️ Projectile
+                    </button>
+                </div>
+
+                <!-- Play / Pause / Reset & Velocity Vector Toggle -->
+                <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800">
+                    <div class="flex items-center gap-2">
+                        <button id="btnPlayPause" onclick="togglePlayPause()" class="px-4 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition shadow">
+                            ⏸ Pause
+                        </button>
+                        <button onclick="resetDynamicSimulation()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700 transition">
+                            ↺ Réinitialiser t=0
+                        </button>
+                    </div>
+                    <label class="flex items-center gap-1.5 text-xs text-amber-300 cursor-pointer">
+                        <input type="checkbox" id="chkShowVelocity" checked onchange="requestRedraw()" class="rounded">
+                        <span>Afficher <span class="font-math"><span class="vec">v</span> = d<span class="vec">r</span>/dt</span></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- 3. NORME (MAGNITUDE) & DIRECTION ANGLE CARD -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg flex-1 flex flex-col justify-between">
+                <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300 mb-3">Caractéristiques Géométriques de <span class="font-math"><span class="vec-wide">OM</span></span></h2>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- Norme / Module Box -->
+                    <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-3">
+                        <div class="text-xs text-slate-400 font-medium mb-1">Norme (Module / Distance OM)</div>
+                        <div class="text-xs font-mono text-slate-400 mb-1">
+                            r = ||<span class="vec-wide">OM</span>|| = √(x² + y²)
+                        </div>
+                        <div id="normCalcSteps" class="text-xs font-mono text-slate-300 mb-1">
+                            r = √((4.0)² + (3.0)²) = √25.00
+                        </div>
+                        <div id="normResult" class="text-xl font-mono font-bold text-sky-400">
+                            r = 5.00 m
+                        </div>
+                    </div>
+
+                    <!-- Angle Direction Box -->
+                    <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-3">
+                        <div class="text-xs text-slate-400 font-medium mb-1">Direction (Angle polaire θ / Ox)</div>
+                        <div class="text-xs font-mono text-slate-400 mb-1">
+                            tan(θ) = y / x  ;  θ = atan2(y, x)
+                        </div>
+                        <div id="angleRadResult" class="text-xs font-mono text-slate-300 mb-1">
+                            θ ≈ +0.643 rad
+                        </div>
+                        <div id="angleDegResult" class="text-xl font-mono font-bold text-amber-400">
+                            θ = +36.87°
+                        </div>
+                    </div>
+                </div>
+
+                <!-- S2S Pedagogical Tip Footer -->
+                <div class="mt-3 pt-3 border-t border-slate-800/80 text-xs text-slate-400 leading-relaxed">
+                    <strong class="text-sky-400">À retenir (Programme S2S) :</strong> Les vecteurs unitaires <span class="font-math"><span class="vec">i</span></span> et <span class="vec">j</span> sont orthogonaux (<span class="font-math"><span class="vec">i</span> ⊥ <span class="vec">j</span></span>) et de norme égale à l'unité (<span class="font-math">||<span class="vec">i</span>|| = ||<span class="vec">j</span>|| = 1</span>). L'écriture <span class="font-math"><span class="vec-wide">OM</span> = x<span class="vec">i</span> + y<span class="vec">j</span></span> traduit la décomposition unique du vecteur position sur la base <span class="font-math">(<span class="vec">i</span>, <span class="vec">j</span>)</span>.
+                </div>
+            </div>
+
+        </aside>
+    </main>
+
+    <footer class="border-t border-slate-800/80 bg-slate-900/60 py-2.5 px-4 text-center text-xs text-slate-400">
+        Conçu pour les élèves de <span class="text-sky-400 font-semibold">S2S</span> • <span class="text-amber-300 font-semibold">by Rabih A.G. Physics Teacher/Solar &amp; Smart Syst. Tech.</span>
+    </footer>
+
+    <!-- ================= JAVASCRIPT PHYSICS & GRAPHICS ENGINE ================= -->
+    <script>
+        /**
+         * ============================================================================
+         * PHYSIQUE S2S (GRADE 11) — POSITION VECTOR & 2D KINEMATICS SIMULATOR
+         * ============================================================================
+         * Pedagogical Objectives:
+         * 1. Represent a point M(x; y) in an orthonormal Cartesian frame (O; i, j).
+         * 2. Construct the position vector OM = r = x*i + y*j and visualize its
+         *    orthogonal vector components (x*i along Ox, y*j along Oy).
+         * 3. Dynamically format the algebraic vector equation with proper signs.
+         * 4. Bridge static position vectors with time-dependent parametric kinematics
+         *    r(t) = x(t)i + y(t)j integrated via 4th-Order Runge-Kutta (RK4).
+         * ============================================================================
+         */
+
+        // --- GLOBAL SIMULATION STATE ---
+        const state = {
+            mode: 'static',        // 'static' (free point choice) or 'dynamic' (RK4 trajectory)
+            theme: 'dark',         // 'dark' or 'light'
+            snapStep: 0.5,         // Grid snapping increment in meters (0, 0.1, 0.5, 1.0)
+            isDragging: false,     // True when student drags point M on canvas
+
+            // Point M state in SI units (meters and m/s)
+            x: 4.0,
+            y: 3.0,
+            vx: 0.0,
+            vy: 6.0,
+
+            // Dynamic RK4 parameters
+            t: 0.0,
+            isRunning: true,
+            dynamicLaw: 'circle',  // 'circle' (2D harmonic oscillator), 'lissajous', 'projectile'
+            mass: 1.0,             // Mass m = 1.0 kg for energy computation
+            omegaX: 1.5,           // Angular frequency along X (rad/s)
+            omegaY: 1.5,           // Angular frequency along Y (rad/s)
+            gravity: 9.8,          // Gravitational acceleration g (m/s^2) for projectile
+
+            // History buffer for trajectory trail
+            trail: [],             // Array of {x, y}
+
+            // Coordinate system bounds (-10 m to +10 m on both axes)
+            worldRange: 10.5
+        };
+
+        // --- CANVAS REFERENCES ---
+        const mainCanvas = document.getElementById('cartesianCanvas');
+        const ctx = mainCanvas.getContext('2d');
+
+        /**
+         * ============================================================================
+         * SECTION 1: COORDINATE TRANSFORMATIONS (WORLD <-> CANVAS PIXELS)
+         * ============================================================================
+         * Ensures an strictly isotropic orthonormal frame (O; i, j) where ||i|| = ||j||
+         * in pixel length regardless of screen aspect ratio.
+         */
+        function getTransform(canvas) {
+            const w = canvas.width;
+            const h = canvas.height;
+            const minDim = Math.min(w, h);
+            // Scale in pixels per meter so that [-10, 10] fits comfortably with margins
+            const scale = (minDim * 0.86) / (2 * 10);
+            const originX = w / 2;
+            const originY = h / 2;
+            return { w, h, scale, originX, originY };
+        }
+
+        function worldToScreen(wx, wy, transform) {
+            return {
+                px: transform.originX + wx * transform.scale,
+                py: transform.originY - wy * transform.scale // Y points UP in physics
+            };
+        }
+
+        function screenToWorld(px, py, transform) {
+            return {
+                wx: (px - transform.originX) / transform.scale,
+                wy: (transform.originY - py) / transform.scale
+            };
+        }
+
+        /**
+         * Snaps a world coordinate value to the nearest grid step if snapping is active,
+         * and clamps it within [-10, 10].
+         */
+        function snapAndClamp(val) {
+            const clamped = Math.max(-10, Math.min(10, val));
+            if (state.snapStep > 0 && state.mode === 'static') {
+                return Math.round(clamped / state.snapStep) * state.snapStep;
+            }
+            return Math.round(clamped * 100) / 100;
+        }
+
+        /**
+         * ============================================================================
+         * SECTION 2: ALGEBRAIC VECTOR EXPRESSION FORMATTER (IN TERMS OF i AND j)
+         * ============================================================================
+         * Formats the position vector OM = r = x i + y j according to French S2S
+         * mathematical conventions, handling positive, negative, and zero components.
+         */
+        function formatNum(n, decimals = 2) {
+            // Clean floating point noise (-0.00 -> 0)
+            if (Math.abs(n) < 1e-6) return "0";
+            // If step is 0.5 or 1 in static mode, show 1 decimal if needed, else up to 2
+            const rounded = Number(Math.round(n + 'e2') + 'e-2');
+            return Number.isInteger(rounded) ? rounded.toFixed(1) : rounded.toString();
+        }
+
+        function updateMathematicalReadouts() {
+            const x = Math.abs(state.x) < 1e-5 ? 0 : state.x;
+            const y = Math.abs(state.y) < 1e-5 ? 0 : state.y;
+
+            const xStr = formatNum(x);
+            const yStr = formatNum(y);
+
+            // 1. Update inline point coordinates
+            document.getElementById('inlineCoordTitle').textContent = `M(${xStr} ; ${yStr})`;
+            document.getElementById('pointCoordReadout').textContent = `M ( ${xStr} ; ${yStr} )`;
+            document.getElementById('colX').textContent = `x = ${xStr}`;
+            document.getElementById('colY').textContent = `y = ${yStr}`;
+
+            // 2. Quadrant / Axis Badge
+            const quadBadge = document.getElementById('quadrantBadge');
+            if (x === 0 && y === 0) {
+                quadBadge.textContent = "Origine O(0 ; 0)";
+            } else if (y === 0) {
+                quadBadge.textContent = "Sur l'axe des abscisses (x'Ox)";
+            } else if (x === 0) {
+                quadBadge.textContent = "Sur l'axe des ordonnées (y'Oy)";
+            } else if (x > 0 && y > 0) {
+                quadBadge.textContent = "Quadrant I (x > 0, y > 0)";
+            } else if (x < 0 && y > 0) {
+                quadBadge.textContent = "Quadrant II (x < 0, y > 0)";
+            } else if (x < 0 && y < 0) {
+                quadBadge.textContent = "Quadrant III (x < 0, y < 0)";
+            } else {
+                quadBadge.textContent = "Quadrant IV (x > 0, y < 0)";
+            }
+
+            // 3. Build the exact algebraic expression in terms of vect(i) and vect(j)
+            const eqContainer = document.getElementById('vectorEquationDisplay');
+            const zeroHint = document.getElementById('strictZeroEquationDisplay');
+
+            const signY = y >= 0 ? "+" : "−";
+            const absYStr = formatNum(Math.abs(y));
+            const xTermHTML = `<span class="text-rose-400 font-mono">${xStr}</span><span class="vec text-amber-300 ml-0.5">i</span>`;
+            const yTermSignedHTML = `<span class="text-slate-300 mx-2">${signY}</span><span class="text-emerald-400 font-mono">${absYStr}</span><span class="vec text-amber-300 ml-0.5">j</span>`;
+
+            if (x === 0 && y === 0) {
+                eqContainer.innerHTML = `
+                    <span class="text-sky-400"><span class="vec-wide">OM</span> = <span class="vec">r</span> = <span class="vec">0</span></span>
+                `;
+                zeroHint.innerHTML = `Forme complète : <span class="font-math"><span class="vec-wide">OM</span> = 0 <span class="vec">i</span> + 0 <span class="vec">j</span></span>`;
+            } else if (y === 0) {
+                eqContainer.innerHTML = `
+                    <span class="text-sky-400"><span class="vec-wide">OM</span> = <span class="vec">r</span> = </span>
+                    ${xTermHTML}
+                `;
+                zeroHint.innerHTML = `Forme complète : <span class="font-math"><span class="vec-wide">OM</span> = ${xStr} <span class="vec">i</span> + 0 <span class="vec">j</span></span> (ordonnée nulle)`;
+            } else if (x === 0) {
+                const pureYStr = formatNum(y);
+                eqContainer.innerHTML = `
+                    <span class="text-sky-400"><span class="vec-wide">OM</span> = <span class="vec">r</span> = </span>
+                    <span class="text-emerald-400 font-mono">${pureYStr}</span><span class="vec text-amber-300 ml-0.5">j</span>
+                `;
+                zeroHint.innerHTML = `Forme complète : <span class="font-math"><span class="vec-wide">OM</span> = 0 <span class="vec">i</span> ${y >= 0 ? '+' : '−'} ${absYStr} <span class="vec">j</span></span> (abscisse nulle)`;
+            } else {
+                eqContainer.innerHTML = `
+                    <span class="text-sky-400"><span class="vec-wide">OM</span> = <span class="vec">r</span> = </span>
+                    ${xTermHTML}${yTermSignedHTML}
+                `;
+                zeroHint.innerHTML = `Unité SI : mètre (m) • Composantes : <span class="text-rose-400">x<sub>M</sub> = ${xStr} m</span> ; <span class="text-emerald-400">y<sub>M</sub> = ${yStr} m</span>`;
+            }
+
+            // 4. Magnitude (Norme) and Polar Angle (Direction)
+            const rSquared = x * x + y * y;
+            const r = Math.sqrt(rSquared);
+            document.getElementById('normCalcSteps').textContent =
+                `r = √((${xStr})² + (${yStr})²) = √${rSquared.toFixed(2)}`;
+            document.getElementById('normResult').textContent = `r = ${r.toFixed(2)} m`;
+
+            if (r < 1e-5) {
+                document.getElementById('angleRadResult').textContent = `θ est indéterminé (Point O)`;
+                document.getElementById('angleDegResult').textContent = `θ = — °`;
+            } else {
+                const thetaRad = Math.atan2(y, x);
+                const thetaDeg = thetaRad * (180 / Math.PI);
+                const signAngle = thetaDeg >= 0 ? "+" : "";
+                document.getElementById('angleRadResult').textContent =
+                    `θ ≈ ${signAngle}${thetaRad.toFixed(3)} rad`;
+                document.getElementById('angleDegResult').textContent =
+                    `θ = ${signAngle}${thetaDeg.toFixed(2)}°`;
+            }
+
+            // Sync Sliders & Numeric Inputs if in Static Mode
+            if (state.mode === 'static') {
+                document.getElementById('sliderX').value = x;
+                document.getElementById('sliderY').value = y;
+                if (document.activeElement !== document.getElementById('inputX')) {
+                    document.getElementById('inputX').value = x;
+                }
+                if (document.activeElement !== document.getElementById('inputY')) {
+                    document.getElementById('inputY').value = y;
+                }
+            }
+        }
+
+        /**
+         * ============================================================================
+         * SECTION 3: 4TH-ORDER RUNGE-KUTTA (RK4) NUMERICAL INTEGRATOR (DYNAMIC MODE)
+         * ============================================================================
+         * Computes the time evolution of state vector S = [x, y, vx, vy] under 2D forces:
+         * - 'circle' / 'lissajous': 2D Harmonic restoring acceleration ax = -omegaX^2 * x, ay = -omegaY^2 * y
+         * - 'projectile': Constant gravitational acceleration ax = 0, ay = -g (with elastic ground bounce)
+         */
+        function computeAcceleration(x, y) {
+            if (state.dynamicLaw === 'circle' || state.dynamicLaw === 'lissajous') {
+                return {
+                    ax: - (state.omegaX * state.omegaX) * x,
+                    ay: - (state.omegaY * state.omegaY) * y
+                };
+            } else if (state.dynamicLaw === 'projectile') {
+                return {
+                    ax: 0,
+                    ay: -state.gravity
+                };
+            }
+            return { ax: 0, ay: 0 };
+        }
+
+        function stepRK4(dt) {
+            // Derivative evaluation helper for state [x, y, vx, vy]
+            function derivatives(s) {
+                const acc = computeAcceleration(s.x, s.y);
+                return {
+                    dx: s.vx,
+                    dy: s.vy,
+                    dvx: acc.ax,
+                    dvy: acc.ay
+                };
+            }
+
+            const s0 = { x: state.x, y: state.y, vx: state.vx, vy: state.vy };
+
+            const k1 = derivatives(s0);
+
+            const s1 = {
+                x: s0.x + 0.5 * dt * k1.dx,
+                y: s0.y + 0.5 * dt * k1.dy,
+                vx: s0.vx + 0.5 * dt * k1.dvx,
+                vy: s0.vy + 0.5 * dt * k1.dvy
+            };
+            const k2 = derivatives(s1);
+
+            const s2 = {
+                x: s0.x + 0.5 * dt * k2.dx,
+                y: s0.y + 0.5 * dt * k2.dy,
+                vx: s0.vx + 0.5 * dt * k2.dvx,
+                vy: s0.vy + 0.5 * dt * k2.dvy
+            };
+            const k3 = derivatives(s2);
+
+            const s3 = {
+                x: s0.x + dt * k3.dx,
+                y: s0.y + dt * k3.dy,
+                vx: s0.vx + dt * k3.dvx,
+                vy: s0.vy + dt * k3.dvy
+            };
+            const k4 = derivatives(s3);
+
+            // Update position and velocity using weighted RK4 sum
+            state.x = s0.x + (dt / 6) * (k1.dx + 2 * k2.dx + 2 * k3.dx + k4.dx);
+            state.y = s0.y + (dt / 6) * (k1.dy + 2 * k2.dy + 2 * k3.dy + k4.dy);
+            state.vx = s0.vx + (dt / 6) * (k1.dvx + 2 * k2.dvx + 2 * k3.dvx + k4.dvx);
+            state.vy = s0.vy + (dt / 6) * (k1.dvy + 2 * k2.dvy + 2 * k3.dvy + k4.dvy);
+            state.t += dt;
+
+            // Boundary reflection for Projectile mode so it stays inside the [-9, 9] plane
+            if (state.dynamicLaw === 'projectile') {
+                if (state.y < -8) {
+                    state.y = -8;
+                    state.vy = -state.vy; // Perfectly elastic floor bounce
+                }
+                if (state.x > 9 || state.x < -9) {
+                    state.x = Math.sign(state.x) * 9;
+                    state.vx = -state.vx;
+                }
+            }
+
+            // Record trajectory trail
+            state.trail.push({ x: state.x, y: state.y });
+            if (state.trail.length > 260) state.trail.shift();
+        }
+
+        /**
+         * ============================================================================
+         * SECTION 4: CANVAS DRAWING UTILITIES (ARROWS, LABELS, ORTHONORMAL GRID)
+         * ============================================================================
+         */
+        function drawVectorArrow(context, x1, y1, x2, y2, color, lineWidth = 3, headLength = 12, dashed = false) {
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const len = Math.hypot(dx, dy);
+            if (len < 2) return;
+
+            const angle = Math.atan2(dy, dx);
+            context.save();
+            context.strokeStyle = color;
+            context.fillStyle = color;
+            context.lineWidth = lineWidth;
+            context.lineCap = 'round';
+            if (dashed) context.setLineDash([5, 5]);
+
+            // Shaft
+            context.beginPath();
+            context.moveTo(x1, y1);
+            context.lineTo(x2 - headLength * 0.7 * Math.cos(angle), y2 - headLength * 0.7 * Math.sin(angle));
+            context.stroke();
+
+            // Arrowhead
+            context.setLineDash([]);
+            context.beginPath();
+            context.moveTo(x2, y2);
+            context.lineTo(
+                x2 - headLength * Math.cos(angle - Math.PI / 6.5),
+                y2 - headLength * Math.sin(angle - Math.PI / 6.5)
+            );
+            context.lineTo(
+                x2 - headLength * Math.cos(angle + Math.PI / 6.5),
+                y2 - headLength * Math.sin(angle + Math.PI / 6.5)
+            );
+            context.closePath();
+            context.fill();
+            context.restore();
+        }
+
+        /**
+         * Draws a mathematical symbol with an arrow above it on the 2D canvas
+         * e.g., i, j, OM, r, v
+         */
+        function drawMathVectorLabel(context, text, px, py, color, fontSize = 15) {
+            context.save();
+            context.font = `italic bold ${fontSize}px "Cambria Math", "Times New Roman", serif`;
+            context.fillStyle = color;
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillText(text, px, py);
+
+            // Measure width to draw top vector arrow
+            const metrics = context.measureText(text);
+            const halfW = Math.max(6, metrics.width * 0.55);
+            const arrowY = py - fontSize * 0.62;
+
+            context.strokeStyle = color;
+            context.lineWidth = 1.6;
+            context.beginPath();
+            context.moveTo(px - halfW, arrowY);
+            context.lineTo(px + halfW, arrowY);
+            context.lineTo(px + halfW - 4, arrowY - 3);
+            context.moveTo(px + halfW, arrowY);
+            context.lineTo(px + halfW - 4, arrowY + 3);
+            context.stroke();
+            context.restore();
+        }
+
+        /**
+         * ============================================================================
+         * SECTION 5: MAIN CARTESIAN PLANE RENDERER
+         * ============================================================================
+         */
+        function renderCartesianPlane() {
+            const tr = getTransform(mainCanvas);
+            const isDark = state.theme === 'dark';
+
+            // Palette based on theme
+            const bgColor = isDark ? '#020617' : '#f8fafc';
+            const subGridColor = isDark ? '#0f172a' : '#e2e8f0';
+            const mainGridColor = isDark ? '#1e293b' : '#cbd5e1';
+            const axisColor = isDark ? '#64748b' : '#475569';
+            const textColor = isDark ? '#94a3b8' : '#334155';
+
+            // 1. Clear Canvas
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, tr.w, tr.h);
+
+            // 2. Draw Sub-grid (0.5m) & Main Integer Grid (1.0m)
+            ctx.lineWidth = 1;
+            for (let g = -10; g <= 10; g += 0.5) {
+                const isMajor = Number.isInteger(g);
+                ctx.strokeStyle = isMajor ? mainGridColor : subGridColor;
+
+                // Vertical grid line
+                const vx = worldToScreen(g, 0, tr).px;
+                ctx.beginPath();
+                ctx.moveTo(vx, 0);
+                ctx.lineTo(vx, tr.h);
+                ctx.stroke();
+
+                // Horizontal grid line
+                const hy = worldToScreen(0, g, tr).py;
+                ctx.beginPath();
+                ctx.moveTo(0, hy);
+                ctx.lineTo(tr.w, hy);
+                ctx.stroke();
+            }
+
+            // 3. Draw X and Y Axes with Arrows and Graduations
+            const leftEdge = worldToScreen(-10.4, 0, tr);
+            const rightEdge = worldToScreen(10.4, 0, tr);
+            const bottomEdge = worldToScreen(0, -10.4, tr);
+            const topEdge = worldToScreen(0, 10.4, tr);
+
+            drawVectorArrow(ctx, leftEdge.px, tr.originY, rightEdge.px, tr.originY, axisColor, 2, 10);
+            drawVectorArrow(ctx, tr.originX, bottomEdge.py, tr.originX, topEdge.py, axisColor, 2, 10);
+
+            // Axis Titles (x'Ox and y'Oy)
+            ctx.font = 'bold 13px Inter, sans-serif';
+            ctx.fillStyle = textColor;
+            ctx.fillText('x (m)', rightEdge.px - 28, tr.originY - 12);
+            ctx.fillText("x'", leftEdge.px + 8, tr.originY - 12);
+            ctx.fillText('y (m)', tr.originX + 12, topEdge.py + 14);
+            ctx.fillText("y'", tr.originX + 12, bottomEdge.py - 8);
+
+            // Numerical Tick Labels every 2 units
+            ctx.font = '11px "JetBrains Mono", monospace';
+            ctx.textAlign = 'center';
+            for (let i = -10; i <= 10; i += 2) {
+                if (i === 0) continue;
+                const pX = worldToScreen(i, 0, tr);
+                ctx.fillText(i.toString(), pX.px, tr.originY + 16);
+
+                const pY = worldToScreen(0, i, tr);
+                ctx.textAlign = 'right';
+                ctx.fillText(i.toString(), tr.originX - 8, pY.py + 4);
+                ctx.textAlign = 'center';
+            }
+
+            // Origin Label O(0;0)
+            ctx.font = 'bold 13px Inter, sans-serif';
+            ctx.fillStyle = isDark ? '#e2e8f0' : '#0f172a';
+            ctx.fillText('O', tr.originX - 14, tr.originY + 16);
+
+            // 4. Draw Trajectory Trail (if in Dynamic Mode)
+            if (state.trail.length > 1) {
+                ctx.save();
+                ctx.strokeStyle = isDark ? 'rgba(56, 189, 248, 0.35)' : 'rgba(2, 132, 199, 0.4)';
+                ctx.lineWidth = 2.5;
+                ctx.beginPath();
+                state.trail.forEach((pt, idx) => {
+                    const sp = worldToScreen(pt.x, pt.y, tr);
+                    if (idx === 0) ctx.moveTo(sp.px, sp.py);
+                    else ctx.lineTo(sp.px, sp.py);
+                });
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            // Current screen coordinates of O, M, Mx(x,0), My(0,y)
+            const pO = { px: tr.originX, py: tr.originY };
+            const pM = worldToScreen(state.x, state.y, tr);
+            const pMx = worldToScreen(state.x, 0, tr);
+            const pMy = worldToScreen(0, state.y, tr);
+
+            // 5. Orthogonal Dashed Projection Lines (M -> Mx on Ox and M -> My on Oy)
+            if (document.getElementById('chkProjections').checked && (Math.abs(state.x) > 0.05 || Math.abs(state.y) > 0.05)) {
+                ctx.save();
+                ctx.setLineDash([6, 5]);
+                ctx.lineWidth = 1.6;
+
+                // Vertical dashed line to X-axis (shows x_M)
+                ctx.strokeStyle = 'rgba(244, 63, 94, 0.75)'; // Rose
+                ctx.beginPath();
+                ctx.moveTo(pM.px, pM.py);
+                ctx.lineTo(pMx.px, pMx.py);
+                ctx.stroke();
+
+                // Horizontal dashed line to Y-axis (shows y_M)
+                ctx.strokeStyle = 'rgba(52, 211, 153, 0.75)'; // Emerald
+                ctx.beginPath();
+                ctx.moveTo(pM.px, pM.py);
+                ctx.lineTo(pMy.px, pMy.py);
+                ctx.stroke();
+                ctx.restore();
+
+                // Projection markers on axes
+                ctx.fillStyle = '#f43f5e';
+                ctx.beginPath();
+                ctx.arc(pMx.px, pMx.py, 4, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#34d399';
+                ctx.beginPath();
+                ctx.arc(pMy.px, pMy.py, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // 6. Component Vectors x*i and y*j
+            if (document.getElementById('chkComponents').checked) {
+                // Vector x*i along Ox
+                if (Math.abs(state.x) > 0.1) {
+                    drawVectorArrow(ctx, pO.px, pO.py, pMx.px, pMx.py, '#f43f5e', 3.5, 11);
+                    const labelOffsetY = state.y >= 0 ? 22 : -18;
+                    drawMathVectorLabel(ctx, `${formatNum(state.x)} i`, (pO.px + pMx.px) / 2, pO.py + labelOffsetY, '#fb7185', 14);
+                }
+                // Vector y*j along Oy
+                if (Math.abs(state.y) > 0.1) {
+                    drawVectorArrow(ctx, pO.px, pO.py, pMy.px, pMy.py, '#10b981', 3.5, 11);
+                    const labelOffsetX = state.x >= 0 ? -28 : 28;
+                    drawMathVectorLabel(ctx, `${formatNum(state.y)} j`, pO.px + labelOffsetX, (pO.py + pMy.py) / 2, '#34d399', 14);
+                }
+            }
+
+            // 7. Chasles Triangle Rule (Head-to-Tail vector addition: OM = ON + NM = x*i + y*j)
+            if (document.getElementById('chkTriangle').checked && Math.abs(state.x) > 0.1 && Math.abs(state.y) > 0.1) {
+                drawVectorArrow(ctx, pMx.px, pMx.py, pM.px, pM.py, '#10b981', 2.5, 10, true);
+                drawMathVectorLabel(ctx, `${formatNum(state.y)} j`, pMx.px + (state.x >= 0 ? 26 : -26), (pMx.py + pM.py) / 2, '#34d399', 13);
+            }
+
+            // 8. Orthonormal Basis Unit Vectors i (1,0) and j (0,1) at Origin O
+            const pUnitI = worldToScreen(1, 0, tr);
+            const pUnitJ = worldToScreen(0, 1, tr);
+            drawVectorArrow(ctx, pO.px, pO.py, pUnitI.px, pUnitI.py, '#fbbf24', 4, 10);
+            drawVectorArrow(ctx, pO.px, pO.py, pUnitJ.px, pUnitJ.py, '#fbbf24', 4, 10);
+            drawMathVectorLabel(ctx, 'i', (pO.px + pUnitI.px) / 2 + 2, pO.py - 14, '#fbbf24', 15);
+            drawMathVectorLabel(ctx, 'j', pO.px - 15, (pO.py + pUnitJ.py) / 2, '#fbbf24', 15);
+
+            // 9. Polar Angle Arc theta
+            const rNorm = Math.hypot(state.x, state.y);
+            if (document.getElementById('chkAngle').checked && rNorm > 0.8) {
+                const theta = Math.atan2(state.y, state.x);
+                const arcRadius = Math.min(38, rNorm * tr.scale * 0.45);
+                ctx.save();
+                ctx.strokeStyle = '#fbbf24';
+                ctx.fillStyle = 'rgba(251, 191, 36, 0.14)';
+                ctx.lineWidth = 1.8;
+                ctx.beginPath();
+                ctx.moveTo(pO.px, pO.py);
+                // Canvas angles are clockwise, so -theta is used
+                ctx.arc(pO.px, pO.py, arcRadius, 0, -theta, theta > 0);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                // Angle label
+                const midAngle = -theta / 2;
+                const tx = pO.px + (arcRadius + 16) * Math.cos(midAngle);
+                const ty = pO.py + (arcRadius + 16) * Math.sin(midAngle);
+                ctx.fillStyle = '#fbbf24';
+                ctx.font = 'bold 12px "JetBrains Mono", monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(`θ=${(theta * 180 / Math.PI).toFixed(0)}°`, tx, ty);
+                ctx.restore();
+            }
+
+            // 10. Draw Main Position Vector OM = r
+            if (rNorm > 0.05) {
+                drawVectorArrow(ctx, pO.px, pO.py, pM.px, pM.py, '#38bdf8', 4, 14);
+                // Position label OM = r near the middle of the vector shaft
+                const angle = Math.atan2(pM.py - pO.py, pM.px - pO.px);
+                const normalX = -Math.sin(angle) * 20;
+                const normalY = Math.cos(angle) * 20;
+                const midX = (pO.px + pM.px) / 2 + normalX;
+                const midY = (pO.py + pM.py) / 2 + normalY;
+                drawMathVectorLabel(ctx, 'OM', midX, midY, '#38bdf8', 16);
+            }
+
+            // 11. Draw Velocity Vector v (if in Dynamic Mode and checked)
+            if (state.mode === 'dynamic' && document.getElementById('chkShowVelocity').checked) {
+                const vScale = 0.35; // Scale velocity m/s to world meters for visualization
+                const pVEnd = worldToScreen(state.x + state.vx * vScale, state.y + state.vy * vScale, tr);
+                drawVectorArrow(ctx, pM.px, pM.py, pVEnd.px, pVEnd.py, '#f59e0b', 3, 11);
+                drawMathVectorLabel(ctx, 'v', pVEnd.px + 14, pVEnd.py - 10, '#f59e0b', 15);
+            }
+
+            // 12. Draw Point M Handle and its Direct Coordinate Badge M(x ; y) beside it
+            ctx.save();
+            // Outer glow halo
+            ctx.fillStyle = 'rgba(56, 189, 248, 0.28)';
+            ctx.beginPath();
+            ctx.arc(pM.px, pM.py, state.isDragging ? 16 : 12, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Inner Point M circle
+            ctx.fillStyle = '#38bdf8';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.arc(pM.px, pM.py, 6.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // REQUIREMENT: Display coordinates M(x ; y) directly beside the chosen point M on the canvas
+            const coordText = `M ( ${formatNum(state.x)} ; ${formatNum(state.y)} )`;
+            ctx.font = 'bold 13px "JetBrains Mono", monospace';
+            const textMetrics = ctx.measureText(coordText);
+            const boxW = textMetrics.width + 18;
+            const boxH = 26;
+
+            // Smart offset so badge stays inside canvas boundaries
+            let offsetX = state.x >= 0 ? 14 : -(boxW + 14);
+            let offsetY = state.y >= 0 ? -(boxH + 10) : 12;
+            if (pM.px + offsetX + boxW > tr.w - 8) offsetX = -(boxW + 14);
+            if (pM.px + offsetX < 8) offsetX = 14;
+            if (pM.py + offsetY < 8) offsetY = 14;
+            if (pM.py + offsetY + boxH > tr.h - 8) offsetY = -(boxH + 10);
+
+            const bx = pM.px + offsetX;
+            const by = pM.py + offsetY;
+
+            // Pill background
+            ctx.fillStyle = isDark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.94)';
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.roundRect(bx, by, boxW, boxH, 8);
+            ctx.fill();
+            ctx.stroke();
+
+            // Coordinate text inside pill
+            ctx.fillStyle = isDark ? '#f8fafc' : '#0f172a';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(coordText, bx + 9, by + boxH / 2);
+            ctx.restore();
+        }
+
+        /**
+         * ============================================================================
+         * SECTION 6: INTERACTION HANDLERS (MOUSE, TOUCH, SLIDERS, MODES)
+         * ============================================================================
+         */
+        function updatePointFromPointer(clientX, clientY) {
+            const rect = mainCanvas.getBoundingClientRect();
+            const px = (clientX - rect.left) * (mainCanvas.width / rect.width);
+            const py = (clientY - rect.top) * (mainCanvas.height / rect.height);
+            const tr = getTransform(mainCanvas);
+            const worldPt = screenToWorld(px, py, tr);
+
+            state.x = snapAndClamp(worldPt.wx);
+            state.y = snapAndClamp(worldPt.wy);
+
+            // If user drags point M while in Dynamic mode, reset initial velocity cleanly
+            if (state.mode === 'dynamic') {
+                state.trail = [{ x: state.x, y: state.y }];
+            }
+
+            updateMathematicalReadouts();
+            requestRedraw();
+        }
+
+        mainCanvas.addEventListener('pointerdown', (e) => {
+            state.isDragging = true;
+            mainCanvas.setPointerCapture(e.pointerId);
+            updatePointFromPointer(e.clientX, e.clientY);
+        });
+
+        mainCanvas.addEventListener('pointermove', (e) => {
+            if (!state.isDragging) return;
+            updatePointFromPointer(e.clientX, e.clientY);
+        });
+
+        mainCanvas.addEventListener('pointerup', (e) => {
+            state.isDragging = false;
+            mainCanvas.releasePointerCapture(e.pointerId);
+            requestRedraw();
+        });
+
+        function setPointCoordinates(x, y) {
+            if (state.mode === 'dynamic') setSimMode('static');
+            state.x = x;
+            state.y = y;
+            state.vx = 0;
+            state.vy = 0;
+            updateMathematicalReadouts();
+            requestRedraw();
+        }
+
+        function onSliderChange(axis, val) {
+            const num = parseFloat(val);
+            if (isNaN(num)) return;
+            if (axis === 'x') state.x = snapAndClamp(num);
+            if (axis === 'y') state.y = snapAndClamp(num);
+            updateMathematicalReadouts();
+            requestRedraw();
+        }
+
+        function onNumericInputChange(axis, val) {
+            const num = parseFloat(val);
+            if (isNaN(num)) return;
+            const clamped = Math.max(-10, Math.min(10, num));
+            if (axis === 'x') state.x = clamped;
+            if (axis === 'y') state.y = clamped;
+            updateMathematicalReadouts();
+            requestRedraw();
+        }
+
+        function updateSnapMode() {
+            state.snapStep = parseFloat(document.getElementById('snapSelect').value);
+            state.x = snapAndClamp(state.x);
+            state.y = snapAndClamp(state.y);
+            updateMathematicalReadouts();
+            requestRedraw();
+        }
+
+        function setSimMode(newMode) {
+            state.mode = newMode;
+            const btnStatic = document.getElementById('btnModeStatic');
+            const btnDynamic = document.getElementById('btnModeDynamic');
+            const staticCard = document.getElementById('staticControlsCard');
+            const dynamicCard = document.getElementById('dynamicControlsCard');
+            const presetsBar = document.getElementById('staticPresetsBar');
+
+            if (newMode === 'static') {
+                btnStatic.className = "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-sky-500 text-slate-950 shadow";
+                btnDynamic.className = "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-400 hover:text-white";
+                staticCard.classList.remove('hidden');
+                dynamicCard.classList.add('hidden');
+                presetsBar.classList.remove('hidden');
+                state.trail = [];
+                state.vx = 0;
+                state.vy = 0;
+                state.x = snapAndClamp(state.x);
+                state.y = snapAndClamp(state.y);
+            } else {
+                btnDynamic.className = "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-indigo-500 text-white shadow";
+                btnStatic.className = "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-400 hover:text-white";
+                staticCard.classList.add('hidden');
+                dynamicCard.classList.remove('hidden');
+                presetsBar.classList.add('hidden');
+                setDynamicLaw(state.dynamicLaw);
+            }
+            updateMathematicalReadouts();
+            requestRedraw();
+        }
+
+        function setDynamicLaw(law) {
+            state.dynamicLaw = law;
+            ['circle', 'lissajous', 'projectile'].forEach(k => {
+                const btn = document.getElementById('lawBtn_' + k);
+                if (k === law) {
+                    btn.className = "px-2.5 py-2 rounded-xl text-xs font-semibold border transition bg-indigo-600 text-white border-indigo-400";
+                } else {
+                    btn.className = "px-2.5 py-2 rounded-xl text-xs font-semibold border transition bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700";
+                }
+            });
+            resetDynamicSimulation();
+        }
+
+        function resetDynamicSimulation() {
+            state.t = 0;
+            state.trail = [];
+            if (state.dynamicLaw === 'circle') {
+                state.omegaX = 1.4;
+                state.omegaY = 1.4;
+                state.x = 6.0;
+                state.y = 0.0;
+                state.vx = 0.0;
+                state.vy = 6.0 * state.omegaY;
+            } else if (state.dynamicLaw === 'lissajous') {
+                state.omegaX = 1.4;
+                state.omegaY = 2.8; // 1:2 frequency ratio
+                state.x = 6.0;
+                state.y = 0.0;
+                state.vx = 0.0;
+                state.vy = 6.0 * state.omegaY;
+            } else if (state.dynamicLaw === 'projectile') {
+                state.x = -7.0;
+                state.y = -2.0;
+                state.vx = 5.5;
+                state.vy = 10.5;
+            }
+            updateMathematicalReadouts();
+            requestRedraw();
+        }
+
+        function togglePlayPause() {
+            state.isRunning = !state.isRunning;
+            const btn = document.getElementById('btnPlayPause');
+            if (state.isRunning) {
+                btn.textContent = "⏸ Pause";
+                btn.className = "px-4 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition shadow";
+            } else {
+                btn.textContent = "▶ Lecture";
+                btn.className = "px-4 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition shadow";
+            }
+        }
+
+        function toggleTheme() {
+            state.theme = state.theme === 'dark' ? 'light' : 'dark';
+            const body = document.body;
+            const icon = document.getElementById('themeIcon');
+            if (state.theme === 'light') {
+                body.classList.remove('bg-slate-950', 'text-slate-100');
+                body.classList.add('bg-slate-100', 'text-slate-900');
+                icon.textContent = '🌙';
+            } else {
+                body.classList.remove('bg-slate-100', 'text-slate-900');
+                body.classList.add('bg-slate-950', 'text-slate-100');
+                icon.textContent = '☀️';
+            }
+            requestRedraw();
+        }
+
+        /**
+         * ============================================================================
+         * SECTION 7: RESPONSIVE CANVAS RESIZING & ANIMATION LOOP
+         * ============================================================================
+         */
+        function resizeAllCanvases() {
+            const dpr = window.devicePixelRatio || 1;
+            const rect = mainCanvas.parentElement.getBoundingClientRect();
+            mainCanvas.width = Math.max(200, Math.floor(rect.width * dpr));
+            mainCanvas.height = Math.max(140, Math.floor(rect.height * dpr));
+            requestRedraw();
+        }
+
+        function requestRedraw() {
+            renderCartesianPlane();
+        }
+
+        let lastFrameTime = performance.now();
+        function animationLoop(now) {
+            const dtReal = Math.min(0.05, (now - lastFrameTime) / 1000);
+            lastFrameTime = now;
+
+            if (state.mode === 'dynamic' && state.isRunning && !state.isDragging) {
+                // Sub-step RK4 integration for numerical accuracy
+                const subSteps = 4;
+                const h = dtReal / subSteps;
+                for (let i = 0; i < subSteps; i++) {
+                    stepRK4(h);
+                }
+                document.getElementById('timeReadout').textContent = `t = ${state.t.toFixed(2)} s`;
+                updateMathematicalReadouts();
+                requestRedraw();
+            }
+
+            requestAnimationFrame(animationLoop);
+        }
+
+        // Initialize on window load
+        window.addEventListener('resize', resizeAllCanvases);
+        window.onload = function () {
+            resizeAllCanvases();
+            updateMathematicalReadouts();
+            requestRedraw();
+            requestAnimationFrame(animationLoop);
+        };
+    </script>
+</body>
+</html>
