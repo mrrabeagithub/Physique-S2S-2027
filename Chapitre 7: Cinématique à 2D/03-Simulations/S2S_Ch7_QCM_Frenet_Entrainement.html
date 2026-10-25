@@ -72,7 +72,7 @@ function codeFingerprint(value) {
 function studentSignIn(){
   const code=document.getElementById('studentAccess').value.trim().toLowerCase();
   const error=document.getElementById('errorAccess');
-  if (!/^s2s\\d{4}$/.test(code)) {
+  if (!/^s2s\d{4}$/.test(code)) {
     error.textContent='Format requis : s2s suivi de quatre chiffres.';return;
   }
   if (!APPROVED_HASHES.has(codeFingerprint(code))) {
