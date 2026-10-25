@@ -74,20 +74,12 @@ function exportCsv(score){
  a.download='S2S_Frenet_'+code+'_resultats.csv';a.click();URL.revokeObjectURL(u);
 }
 
-const APPROVED_HASHES = new Set(["abbccbfd","c0a1c05f","0c87588d","c78d5fbf","51e0ff5f","56f152e6","4d8b285d","b0dfa277","68713f59","0d961ace","3a34a17d","3fb61004","86e60948","cac25af8","4875130f","ae8bc9be","35a93453","1567ecab","29e29f89","91f42c00","d7d744f5","33c84d62","7b8ec30f","70ee5215","35577fba","819d8d2f","891bd6eb","768ebb30"]);
-function codeFingerprint(value) {
-  let h = 2166136261 >>> 0;
-  for (const c of value) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); }
-  return (h >>> 0).toString(16).padStart(8, '0');
-}
+// Version publique: le format est verifie, jamais la liste confidentielle des codes.
 function studentSignIn(){
   const code=document.getElementById('studentAccess').value.trim().toLowerCase();
   const error=document.getElementById('errorAccess');
   if (!/^s2s\d{4}$/.test(code)) {
     error.textContent='Format requis : s2s suivi de quatre chiffres.';return;
-  }
-  if (!APPROVED_HASHES.has(codeFingerprint(code))) {
-    error.textContent='Code non reconnu. Vérifiez votre carte ou contactez le professeur.';return;
   }
   document.getElementById('code').value=code;
   document.getElementById('gate').hidden=true;
