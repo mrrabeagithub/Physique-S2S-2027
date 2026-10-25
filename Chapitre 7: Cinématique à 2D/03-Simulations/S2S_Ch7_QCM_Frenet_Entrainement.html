@@ -62,7 +62,18 @@ function finish(){const done=answers.filter(x=>x!==null).length;if(done<QUESTION
 submitted=true;byId('quiz').hidden=true;byId('result').hidden=false;const score=QUESTIONS.reduce((s,q,i)=>s+(answers[i]===q.correct),0);
 byId('result').innerHTML=`<h2>Résultats de l’évaluation formative</h2><div class="score">${score} / ${QUESTIONS.length}</div><p>${done} réponse(s) renseignée(s). Le but est d’identifier les notions à retravailler.</p><div class="actions"><button id="export" type="button">Exporter mes résultats (CSV)</button><button id="redo" type="button" class="secondary">Recommencer</button></div><h3>Correction expliquée</h3>`+QUESTIONS.map((q,i)=>`<div class="review"><strong>Q${q.n} · ${answers[i]===q.correct?'✓':'À revoir'}</strong><div>Votre réponse : ${answers[i]===null?'aucune':'ABCD'[answers[i]]} · Réponse attendue : ${'ABCD'[q.correct]}</div><p>${escapeHTML(q.explain)}</p></div>`).join('')+`<p class="micro">Ce fichier d'entraînement contient sa clé de correction côté navigateur : il ne constitue pas une épreuve sécurisée ou surveillée. Pour une évaluation notée, utiliser la version validée dans Forms.</p>`;
 byId('export').addEventListener('click',()=>exportCsv(score));byId('redo').addEventListener('click',()=>{answers.fill(null);index=0;submitted=false;byId('result').hidden=true;byId('quiz').hidden=false;paint()})}
-function exportCsv(score){const code=byId('code').value.replace(/[^A-Za-z0-9_-]/g,'').slice(0,24)||'anonyme';let rows=[['code_eleve','question','reponse','reponse_attendue','correct']];QUESTIONS.forEach((q,i)=>rows.push([code,String(q.n),answers[i]===null?'':'ABCD'[answers[i]],'ABCD'[q.correct],String(Number(answers[i]===q.correct))]));rows.push([code,'TOTAL','','',String(score)]);const content='\ufeff'+rows.map(r=>r.join(';')).join('\r\n');const file=new Blob([content],{type:'text/csv;charset=utf-8;'});const u=URL.createObjectURL(file);const a=document.createElement('a');a.href=u;a.download=`S2S_Frenet_${code}_resultats.csv`;a.click();URL.revokeObjectURL(u)}
+function exportCsv(score){
+ const code=byId('code').value;
+ const stamp=new Date().toISOString();
+ const headers=['Horodatage','Code eleve',...QUESTIONS.map(q=>'Q'+String(q.n).padStart(2,'0')),'Score /14','Questions repondues','Origine'];
+ const values=[stamp,code,...answers.map(x=>x===null?'':'ABCD'[x]),String(score),String(answers.filter(x=>x!==null).length),'HTML local'];
+ const csvCell=x=>'"'+String(x).replaceAll('"','""')+'"';
+ const content='\\ufeff'+[headers,values].map(row=>row.map(csvCell).join(';')).join('\\r\\n');
+ const blob=new Blob([content],{type:'text/csv;charset=utf-8;'});
+ const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;
+ a.download='S2S_Frenet_'+code+'_resultats.csv';a.click();URL.revokeObjectURL(u);
+}
+
 const APPROVED_HASHES = new Set(["abbccbfd","c0a1c05f","0c87588d","c78d5fbf","51e0ff5f","56f152e6","4d8b285d","b0dfa277","68713f59","0d961ace","3a34a17d","3fb61004","86e60948","cac25af8","4875130f","ae8bc9be","35a93453","1567ecab","29e29f89","91f42c00","d7d744f5","33c84d62","7b8ec30f","70ee5215","35577fba","819d8d2f","891bd6eb","768ebb30"]);
 function codeFingerprint(value) {
   let h = 2166136261 >>> 0;
