@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#08172c">
+<title>Mission Cinématique 2D · S2S · Base cartésienne</title>
+<style>
+:root{--bg:#08172c;--bg2:#0e2942;--ink:#f7fbff;--teal:#49e0c7;--gold:#f8b65b;--muted:#b6c8dc;--card:#10273f;--line:#2b4864;--green:#43e2ad;--red:#ff7283;--choice:#17324d;--violet:#d9a1fd}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-height:100vh;background:radial-gradient(circle at 5% 7%,#17445f 0,transparent 32%),radial-gradient(circle at 95% 88%,#15385c 0,transparent 29%),var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;overflow-x:hidden}
+button,input{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--gold);outline-offset:3px}button:disabled{opacity:.47;cursor:not-allowed}input[type=range]{accent-color:var(--teal);cursor:pointer;width:100%}
+.shell{max-width:1500px;margin:auto;padding:14px 24px 22px}.top{display:flex;align-items:center;justify-content:space-between;gap:14px}.identity{display:flex;gap:13px;align-items:center}.logo{display:grid;place-items:center;width:51px;height:51px;border-radius:16px;background:linear-gradient(135deg,var(--teal),#2199ca);color:#082034;font-size:27px;font-weight:1000;box-shadow:0 7px 23px #45dbc944}.identity strong{display:block;letter-spacing:.06em;font-size:17px}.identity small{display:block;font-size:13px;color:var(--muted);margin-top:3px}.topright{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}.chip{border:1px solid #385676;border-radius:100px;padding:8px 12px;background:#102b46;color:#e0edf8;font-size:12px;font-weight:850;white-space:nowrap}.chip.accent{background:var(--teal);border-color:var(--teal);color:#0b2736}.chip.gold{color:var(--gold)}.header-btn{background:#152f4a;border:1px solid #42607b;color:#e3f2fa;border-radius:100px;font-size:12px;font-weight:800;padding:9px 12px}
+.main{border:1px solid #365878;border-radius:25px;overflow:hidden;background:linear-gradient(150deg,#142f4a 0,#0b2037 90%);box-shadow:0 26px 65px #040a1b8c;margin-top:14px}.progress-track{height:7px;background:#23445d}.progress-bar{height:100%;width:10%;background:linear-gradient(90deg,var(--teal),var(--gold));transition:width .27s}.stage{padding:18px 20px 20px}.intro{display:flex;gap:18px;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap}.overline{font-size:11px;font-weight:950;color:var(--teal);letter-spacing:.15em;text-transform:uppercase}.intro h1{font-size:clamp(25px,2.4vw,37px);letter-spacing:-.035em;margin:4px 0 3px;font-weight:920;line-height:1.1}.subtitle{font-size:13px;color:var(--muted)}.equation{font-family:Cambria,"Cambria Math","Times New Roman",serif;font-size:clamp(17px,1.55vw,23px);background:#102b46;border:1px solid #3d6079;border-radius:12px;padding:12px 17px;color:#fff9e9;white-space:nowrap}.equation em{font-style:italic;color:var(--gold)}.mathvec{display:inline-block;position:relative}.mathvec::before{content:"→";position:absolute;left:0;right:0;top:-.64em;font-size:.76em;font-style:normal;text-align:center;line-height:1}
+.workspace{display:grid;grid-template-columns:minmax(0,1.03fr) minmax(0,1fr);gap:15px;align-items:stretch}.visual,.quiz{border:1px solid #35516b;background:linear-gradient(155deg,#122d47,#0d2339);border-radius:20px;min-width:0}.visual{padding:15px}.viztop{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}.paneltitle{font-size:13px;font-weight:880;letter-spacing:.08em;text-transform:uppercase}.micro{font-size:11px;color:#a3c2d7}.vizbadge{color:var(--gold);border:1px solid #776249;border-radius:100px;padding:5px 9px;font-size:11px;font-weight:780;white-space:nowrap}
+#phaseCanvas{display:block;width:100%;height:auto;max-height:315px;border:1px solid #31516b;border-radius:13px;background:radial-gradient(circle at 30% 33%,#173f59 0,#0c2138 68%)}#phaseCanvas text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;pointer-events:none}.graph-grid{stroke:#2c5269;stroke-width:.7;opacity:.55}.graph-axis{stroke:#8fb0c6;stroke-width:1.6}.graph-tick{fill:#a5c1d4;font-size:11px}.trajectory{fill:none;stroke:#6e97bd;stroke-width:3;opacity:.75}.traveled{fill:none;stroke:#49e0c7;stroke-width:4;stroke-linecap:round}.point{fill:#fffdf4;stroke:#49e0c7;stroke-width:2.5}.staticpoint{fill:#183a55;stroke:#f8b65b;stroke-width:2}.graph-note{fill:#e4f4fb;font-size:13px;font-weight:750}.graph-label{fill:#b3ccda;font-size:13px}.vector-position{stroke:#b9cee4;stroke-width:2.6;opacity:.88}.vector-velocity{stroke:var(--teal);stroke-width:4}.vector-accel{stroke:var(--gold);stroke-width:4}.vector-chord{stroke:var(--violet);stroke-width:3;stroke-dasharray:7 7}.speed-inset{display:none}.speed-inset.show{display:block}
+.labcontrols{margin-top:11px}.timecontrols{display:flex;align-items:center;gap:10px}.timepill{border:1px solid #35716d;background:#113c49;padding:8px 12px;border-radius:10px;font-variant-numeric:tabular-nums;color:var(--teal);font-size:14px;font-weight:900;min-width:88px;text-align:center}.tinybtn{background:#244864;color:#f5fbff;border:1px solid #55718a;border-radius:10px;padding:9px 12px;white-space:nowrap;font-weight:800;font-size:12px;min-height:38px}.tinybtn:hover{background:#315a77}.togglerow{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px}.toggle{display:flex;align-items:center;gap:6px;border:1px solid #2f516d;background:#142e48;padding:7px 9px;border-radius:9px;color:#dcebf5;font-size:12px;font-weight:720;cursor:pointer;white-space:nowrap}.toggle input{accent-color:var(--teal);margin:0}.readouts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:11px}.readout{background:#0a2239;border:1px solid #274860;border-radius:10px;padding:8px 9px}.readout small{display:block;font-size:10px;color:#9cb7cb;line-height:1.15}.readout strong{font-size:clamp(12px,1.1vw,16px);color:#eafafd;font-variant-numeric:tabular-nums;letter-spacing:-.012em;white-space:nowrap}.legend{display:flex;gap:12px;flex-wrap:wrap;color:#a8c5d5;font-size:11px;margin-top:8px}.legend b{margin-right:4px;font-size:14px}.legend .v{color:var(--teal)}.legend .a{color:var(--gold)}.legend .d{color:var(--violet)}
+.quiz{padding:18px 19px;display:flex;flex-direction:column}.qhead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.qhead .part{font-size:11px;text-transform:uppercase;color:var(--teal);letter-spacing:.13em;font-weight:950}.qhead .topic{font-size:12px;color:#b7ccdb;margin-top:3px}.qnum{color:#86c5d7;font-size:34px;font-weight:950;white-space:nowrap;letter-spacing:-.05em}.qnum small{font-size:13px;font-weight:800;color:#87aabc;letter-spacing:0}.qtitle{font-size:clamp(21px,2.2vw,32px);margin:8px 0 8px;font-weight:900;letter-spacing:-.035em;line-height:1.16}.prompt{color:#e2eff7;font-size:clamp(15px,1.18vw,18px);line-height:1.45;margin:0 0 14px}.choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.choice{display:flex;align-items:center;gap:9px;text-align:left;border:2px solid #31546f;border-radius:14px;padding:13px 12px;min-height:76px;background:var(--choice);color:#f3f9fc;transition:background .15s,border .15s,transform .15s}.choice:hover:not(:disabled){background:#1a3b58;border-color:#67a5bc;transform:translateY(-1px)}.choice .letter{width:34px;height:34px;display:grid;place-items:center;flex:0 0 34px;background:#2b5371;color:#b6e7e0;border-radius:10px;font-size:16px;font-weight:950}.choice .ctext{font-size:clamp(14px,1.13vw,17px);font-weight:780;line-height:1.26}.choice.selected{border-color:var(--gold);background:#3a3944}.choice.selected .letter{background:var(--gold);color:#0a2433}.choice.correct{border-color:var(--green)!important;background:#174b46!important}.choice.correct .letter{background:var(--green);color:#0a2524}.choice.wrong{border-color:var(--red)!important;background:#53303d!important}.choice.wrong .letter{background:var(--red);color:#2c1822}
+.numfields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.numfield{background:#142f49;border:1px solid #3c5d79;border-radius:13px;padding:13px}.numfield label{display:block;font-size:13px;font-weight:800;color:#cfe5f0;margin-bottom:8px}.inputwrap{display:flex;align-items:center;gap:8px}.inputwrap input{min-width:0;width:100%;background:#091d30;border:2px solid #4c6b85;border-radius:10px;padding:10px 9px;color:white;font-size:23px;font-weight:870;font-variant-numeric:tabular-nums}.inputwrap input:disabled{opacity:1;color:#fff}.inputwrap .unit{color:var(--muted);font-weight:750;font-size:13px;white-space:nowrap}.numfield.good{border-color:#43e2ad;background:#143f3c}.numfield.bad{border-color:#ff7283;background:#432a3a}.inputtip{color:#9cb7ca;font-size:12px;margin-top:10px}.smallnote{color:#bad2df;font-size:12px;margin-top:10px;line-height:1.4}
+.assists{display:flex;gap:7px;flex-wrap:wrap;margin-top:16px}.assists button{background:#182e46;color:#d8e9f5;border:1px solid #48647d;border-radius:10px;padding:9px 12px;font-size:13px;font-weight:760}.assists button[aria-expanded=true]{border-color:var(--gold);color:var(--gold)}.assistpanel{margin-top:9px;background:#0c2a40;border:1px solid #42687a;border-radius:11px;padding:11px 13px;color:#d9ebf3;font-size:14px;line-height:1.45}.assistpanel h4{font-size:11px;text-transform:uppercase;letter-spacing:.12em;margin:0 0 7px;color:var(--teal)}.assistpanel p{margin:4px 0 0}.mathline{font-family:Cambria,"Times New Roman",serif;font-size:17px;line-height:1.6;color:#f5fbff;overflow-wrap:anywhere}.solution{margin-top:12px;border:1px solid #2db4a1;border-left:5px solid var(--green);border-radius:12px;padding:13px;background:linear-gradient(125deg,#133e47,#163148);line-height:1.55;max-height:350px;overflow-y:auto}.solution h4{margin:0 0 7px;color:#84f5c5;font-size:14px}.solution p{font-size:14px;color:#dceff4;margin:7px 0}.solution .mathline{background:#0b2b3d;border-radius:7px;padding:5px 9px;font-size:17px;margin:6px 0}.solution .conclusion{border-top:1px solid #4a7476;padding-top:7px;margin-top:10px;font-weight:820;color:#fff}.resulttag{display:inline-block;border:1px solid #74eac9;border-radius:8px;padding:1px 8px;background:#11463f;color:#b7ffdd;font-weight:900}.feedback{margin-top:11px;border-radius:10px;padding:10px 12px;font-weight:850;font-size:14px}.feedback.pass{background:#164c44;color:#a7fbd1;border:1px solid #3ab99b}.feedback.fail{background:#4d2e3a;color:#ffd1d9;border:1px solid #bd6b7d}.feedback.skip{background:#3b3543;color:#f7e2b0;border:1px solid #948158}
+.quizgrow{flex:1;min-height:10px}.bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:18px;padding-top:14px;border-top:1px solid #355772}.actions{display:flex;gap:8px;flex-wrap:wrap}.btn{background:#1b3954;border:1px solid #506e86;color:#eaf5fa;border-radius:12px;padding:12px 15px;font-weight:850;font-size:14px;min-height:45px}.btn:hover:not(:disabled){background:#2d4d68}.btn.primary{background:var(--teal);border-color:var(--teal);color:#092b36}.btn.secondary{background:var(--gold);border-color:var(--gold);color:#152c38}.bottomstatus{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:var(--muted);font-size:12px}.statuspill{padding:8px 12px;background:#132e47;border:1px solid #3a5e7c;border-radius:30px;font-weight:850}.timertxt.urgent{color:var(--gold)}.kbd{color:#8fb5c9;font-size:11px;margin-top:11px;text-align:center}.footer{text-align:center;font-size:12px;color:#94b6c8;margin:13px auto 0;line-height:1.5}.footer strong{color:#cde4f1;font-weight:650}
+#finish{display:none;text-align:center;padding:50px 20px 70px}.finishicon{font-size:62px}#finish h2{font-size:clamp(30px,4vw,54px);margin:0}.bigscore{font-size:clamp(70px,11vw,130px);font-weight:950;color:var(--teal);line-height:1.15;margin:12px auto}.finishsub{font-size:18px;color:#c4e0e9;margin:0 auto 19px;max-width:670px}.finishactions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
+.spark{position:fixed;border-radius:50%;background:var(--teal);box-shadow:0 0 12px var(--teal);opacity:.16;pointer-events:none;animation:float 18s linear infinite}.spark.a{width:9px;height:9px;left:2%;top:25%}.spark.b{width:6px;height:6px;left:94%;top:17%;animation-delay:-7s}.spark.c{width:7px;height:7px;left:79%;top:89%;animation-delay:-11s}@keyframes float{50%{transform:translate(20px,-60px);opacity:.3}}
+@media(max-width:1100px){.workspace{grid-template-columns:1fr}.visual{display:grid;grid-template-columns:1.15fr .85fr;gap:9px;align-items:start}.viztop{grid-column:1/-1}#phaseCanvas{max-height:310px}.labcontrols{margin-top:0}.readouts{grid-template-columns:1fr}.quiz .choices{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:730px){.shell{padding:9px 9px 18px}.top{align-items:flex-start}.identity strong{font-size:13px}.identity small{font-size:11px}.logo{width:39px;height:39px;flex:0 0 39px;font-size:21px}.chip{font-size:10px;padding:6px 8px}.header-btn{font-size:11px;padding:7px 9px}.stage{padding:13px 12px}.intro h1{font-size:25px}.equation{font-size:16px;white-space:normal;width:100%}.workspace{display:flex;flex-direction:column}.visual{display:block;width:100%;padding:11px}#phaseCanvas{max-height:none}.labcontrols{margin-top:10px}.readouts{grid-template-columns:repeat(3,minmax(0,1fr))}.quiz{width:100%;padding:15px}.quiz .choices{grid-template-columns:1fr}.qtitle{font-size:24px}.prompt{font-size:16px}.choices{grid-template-columns:1fr}.choice{min-height:65px}.numfields{grid-template-columns:1fr}.bottom{margin-top:14px}.bottomstatus{width:100%}.kbd{line-height:1.5}}@media(min-width:731px) and (max-width:1100px){.shell{padding:12px}.intro{margin-bottom:12px}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+@media(min-width:1101px) and (max-height:800px){.shell{padding-top:8px;padding-bottom:8px}.logo{height:43px;width:43px;font-size:23px}.main{margin-top:8px}.stage{padding:10px 16px 11px}.intro{margin-bottom:8px}.intro h1{font-size:29px}.visual,.quiz{padding:11px 12px}.viztop{margin-bottom:5px}#phaseCanvas{max-height:214px}.labcontrols{margin-top:7px}.togglerow{margin-top:7px}.readouts{margin-top:7px}.readout{padding:6px 7px}.legend{margin-top:5px}.bottom{margin-top:10px}.footer{margin-top:7px}.choice{min-height:67px;padding:9px 10px}.qtitle{font-size:27px}.qhead .topic{font-size:11px}.question{margin:7px 0}.quizgrow{min-height:0}.readout strong{font-size:13px}.qhead{gap:7px}}
+
+/* Contrôle d'accès S2S : porte d'entrée pédagogique, pas sécurité serveur. */
+.access-gate{width:min(580px,94vw);min-height:min(620px,95vh);margin:clamp(18px,8vh,90px) auto;display:flex;flex-direction:column;justify-content:center;gap:19px;padding:clamp(26px,5vw,48px);border:1px solid #3c667a;border-radius:28px;background:linear-gradient(150deg,#173550,#0b233b);box-shadow:0 24px 70px #020b1e94;color:var(--ink);text-align:center}
+.access-gate[hidden],.shell[hidden]{display:none!important}
+.access-gate .mark{width:66px;height:66px;border-radius:19px;display:grid;place-items:center;margin:0 auto;background:linear-gradient(130deg,var(--teal),#208fc7);color:#092339;font-size:32px;font-weight:900}
+.access-gate h1{margin:0;font-size:clamp(28px,4.8vw,40px);line-height:1.2}
+.access-gate p{margin:0;color:var(--muted);font-size:16px;line-height:1.5}
+.access-gate .access-label{display:block;text-align:left;font-weight:800;color:#d6eef5;margin-bottom:9px}
+.access-gate input{width:100%;font-size:24px;letter-spacing:.06em;border-radius:13px;background:#081b31;color:#fff;border:2px solid #58748a;padding:15px 16px;outline-offset:3px}
+.access-gate input:focus{border-color:var(--teal)}
+.access-gate button{width:100%;margin-top:13px;background:var(--teal);color:#09283a;padding:15px 20px;font-size:19px;font-weight:900;border:0;border-radius:13px;min-height:52px}
+.access-gate button:hover{background:#70f3de}
+.access-gate button:disabled{opacity:.6;cursor:wait}
+.access-msg{min-height:22px;text-align:left;color:var(--red);font-size:14px;font-weight:650}
+.access-small{font-size:12px!important;color:#8eabbf!important}
+@media(max-width:600px){.access-gate{margin:12px auto;min-height:calc(100vh - 24px)}}
+</style>
+</head>
+<body>
+<span class="spark a" aria-hidden="true"></span><span class="spark b" aria-hidden="true"></span><span class="spark c" aria-hidden="true"></span>
+<section id="accessGate" class="access-gate" aria-labelledby="accessHeading">
+ <div class="mark" aria-hidden="true">↗</div>
+ <div><div class="overline">CHALLENGE PHYSIQUE · S2S · CHAPITRE 7</div><h1 id="accessHeading">Mission Cinématique 2D</h1></div>
+ <p>Cette activité est destinée aux élèves S2S. Saisissez votre code personnel remis par votre professeur.</p>
+ <form id="accessForm" autocomplete="off">
+  <label class="access-label" for="studentAccessCode">Code d’accès S2S</label>
+  <input id="studentAccessCode" type="text" inputmode="text" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="s2s••••" aria-describedby="accessError" maxlength="12" required>
+  <div id="accessError" class="access-msg" role="status" aria-live="polite"></div>
+  <button id="unlockBtn" type="submit">Accéder à la fiche →</button>
+ </form>
+ <p class="access-small">Vous utiliserez votre code S2S habituel pour ouvrir l’activité.</p>
+</section>
+<div class="shell" id="activityShell" hidden>
+<header class="top">
+ <div class="identity"><div class="logo" aria-hidden="true">↗</div><div><strong>CHALLENGE PHYSIQUE · S2S</strong><small>Chapitre 7 · Cinématique dans le plan · 2026–2027</small></div></div>
+ <div class="topright"><span class="chip accent">10 DÉFIS</span><span class="chip gold">BASE CARTÉSIENNE</span><button class="header-btn" id="fullBtn" type="button" title="Plein écran (F)">⛶ Plein écran</button></div>
+</header>
+<main class="main"><div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+<section class="stage" id="challengeStage" aria-label="Défi interactif">
+ <div class="intro"><div><div class="overline">Mission 01 · Une particule, dix défis</div><h1>Explorer un mouvement plan</h1><div class="subtitle">Observer · Calculer · Justifier · Vérifier sur la simulation</div></div>
+ <div class="equation" aria-label="vecteur position OM de t égal 2t moins 1 sur i, et t carré moins 4t plus 3 sur j"><em><span class="mathvec">OM</span></em>(t) = (2t − 1) <em><span class="mathvec">i</span></em> + (t² − 4t + 3) <em><span class="mathvec">j</span></em></div></div>
+ <div class="workspace">
+  <section class="visual" aria-label="Laboratoire de trajectoire">
+   <div class="viztop"><div><div class="paneltitle">◉ Laboratoire de trajectoire</div><div class="micro">Repère orthonormé (O ; →i, →j) · unités : m</div></div><span class="vizbadge">t ≥ 0</span></div>
+   <svg id="phaseCanvas" viewBox="0 0 650 400" role="img" aria-label="Trajectoire parabolique du mobile avec curseur temporel et vecteurs mobiles">
+    <defs><marker id="arrowPos" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L6,3 L0,6 Z" fill="#b9cee4"/></marker><marker id="arrowVel" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L6,3 L0,6 Z" fill="#49e0c7"/></marker><marker id="arrowAcc" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L6,3 L0,6 Z" fill="#f8b65b"/></marker><marker id="arrowDelta" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L6,3 L0,6 Z" fill="#d9a1fd"/></marker></defs>
+    <g id="gridLayer"></g><g id="axisLayer"></g>
+    <path id="fullPath" class="trajectory"/><path id="traveledPath" class="traveled"/>
+    <g id="fixedPoints"><circle id="fixed0" r="5" class="staticpoint"/><text id="fixed0label" class="graph-note">M₀</text><circle id="fixed2" r="5" class="staticpoint"/><text id="fixed2label" class="graph-note">M₂</text></g>
+    <line id="deltaVector" class="vector-chord" marker-end="url(#arrowDelta)" style="display:none"/>
+    <line id="positionVector" class="vector-position" marker-end="url(#arrowPos)"/>
+    <line id="velocityVector" class="vector-velocity" marker-end="url(#arrowVel)"/>
+    <line id="accelVector" class="vector-accel" marker-end="url(#arrowAcc)"/>
+    <circle id="mobileGlow" r="11" fill="#49e0c7" opacity=".15"/><circle id="mobile" r="6" class="point"/>
+    <text id="mobileLabel" class="graph-note">M</text>
+    <g id="speedInset" class="speed-inset"><rect x="386" y="13" width="240" height="135" rx="11" fill="#0a2135" stroke="#42647b" stroke-width="1.5"/><text x="400" y="35" class="graph-note" fill="#e4f4fb">Valeur de la vitesse v(t)</text><line x1="409" y1="121" x2="613" y2="121" stroke="#7197b0"/><line x1="409" y1="45" x2="409" y2="121" stroke="#7197b0"/><path id="speedPath" stroke="#f8b65b" fill="none" stroke-width="3"/><circle id="speedDot" r="5" fill="#49e0c7"/><text x="607" y="137" font-size="11" fill="#a5bfce">t</text><text x="411" y="136" font-size="10" fill="#a5bfce">0</text><text x="488" y="136" font-size="10" fill="#a5bfce">2</text></g>
+   </svg>
+   <div class="labcontrols">
+    <div class="timecontrols"><button id="playBtn" class="tinybtn" type="button" aria-label="Animer la particule">▶ Animer</button><label for="timeSlider" style="flex:1;min-width:65px"><span class="micro" style="display:block">Temps t</span><input id="timeSlider" type="range" min="0" max="5" step="0.05" value="1" aria-label="Temps en secondes"></label><span class="timepill" id="timeBadge">1,00 s</span></div>
+    <div class="togglerow" aria-label="Affichage des vecteurs"><label class="toggle"><input id="positionToggle" type="checkbox" checked> Position</label><label class="toggle"><input id="velocityToggle" type="checkbox" checked> Vitesse</label><label class="toggle"><input id="accelToggle" type="checkbox" checked> Accélération</label><label class="toggle"><input id="deltaToggle" type="checkbox"> Déplacement</label><label class="toggle"><input id="speedToggle" type="checkbox"> Courbe v(t)</label></div>
+    <div class="readouts"><div class="readout"><small>Coordonnées de M(t)</small><strong id="readPosition">(1,00 ; 0,00) m</strong></div><div class="readout"><small>Vitesse scalaire</small><strong id="readSpeed">2,83 m/s</strong></div><div class="readout"><small>Accélération · norme</small><strong>2,00 m/s²</strong></div></div>
+    <div class="legend"><span><b class="v">→</b> Vecteur vitesse</span><span><b class="a">→</b> Accélération</span><span><b class="d">⇢</b> Déplacement 0→2 s</span></div>
+   </div>
+  </section>
+  <section class="quiz" aria-label="Exercice progressif">
+   <div class="qhead"><div><div class="part" id="sectionName">PARTIE A · POSITION</div><div class="topic" id="sectionSubtitle">Lire et interpréter les équations horaires</div></div><div class="qnum"><small>Q</small><span id="qNum">01</span><small>/10</small></div></div>
+   <h2 id="qTitle" class="qtitle">Identifier les coordonnées</h2><p id="qPrompt" class="prompt"></p>
+   <div id="answerArea"></div><div class="assists"><button type="button" id="hintBtn" aria-expanded="false">◌ Indice</button><button type="button" id="memoBtn" aria-expanded="false">▤ Rappel de cours</button></div>
+   <div id="hintPanel" class="assistpanel" hidden></div><div id="memoPanel" class="assistpanel" hidden></div>
+   <div id="feedback" class="feedback" role="status" aria-live="polite" hidden></div>
+   <div id="solution" class="solution" aria-live="polite" hidden><h4>✓ CORRECTION DÉTAILLÉE</h4><div id="solutionContent"></div></div>
+   <div class="quizgrow"></div>
+  </section>
+ </div>
+ <div class="bottom"><div class="actions"><button id="prevBtn" type="button" class="btn">← Précédent</button><button id="revealBtn" type="button" class="btn primary">✓ Valider &amp; corriger</button><button id="nextBtn" type="button" class="btn secondary">Suivant →</button></div><div class="bottomstatus"><span id="timerText" class="statuspill timertxt">⏱ 90 s</span><button id="timerBtn" class="btn" type="button">▶ Chrono</button><span id="scoreText" class="statuspill">★ 0 / 10</span></div></div>
+ <div class="kbd">⌨️ A/B/C/D : choisir · Espace : corriger · ←/→ : naviguer · F : plein écran · Le temps et la simulation restent libres. La flèche → signale un vecteur.</div>
+</section>
+<section id="finish" aria-live="polite"><div class="finishicon">✦</div><div class="overline">Mission terminée · Cinématique 2D</div><h2>Défi cartésien accompli !</h2><div class="bigscore" id="finishScore">0 / 10</div><p class="finishsub" id="finishMessage"></p><div class="finishactions"><button class="btn primary" id="reviewBtn" type="button">← Revoir mes réponses</button><button class="btn secondary" id="resetBtn" type="button">↻ Recommencer</button></div></section>
+</main>
+<footer class="footer"><strong>Prepared by Physics teacher Rabih Abdel Ghafour</strong></footer>
+</div>
+<script>
+'use strict';
+// Données établies à partir de la fiche S2S « 01 Base cartésienne — Étude complète d'un mouvement plan ».
+// Les solutions sont rédigées par l'enseignant ; aucune dépendance ou requête externe.
+const QUESTIONS = [
+ {id:1,section:'A',sectionTitle:'POSITION',sectionSub:'Repérer les coordonnées',title:'Décomposer le vecteur position',prompt:'Dans →OM(t) = (2t − 1) →i + (t² − 4t + 3) →j, quelles sont les deux équations horaires ?',type:'choice',options:[
+  'x = 2t − 1 ; y = t² − 4t + 3','x = t² − 4t + 3 ; y = 2t − 1','x = 2 ; y = 2t − 4','x = 2t + 1 ; y = t² − 4t − 3'],answer:0,
+  hint:'Dans un repère (O ; →i, →j), la fonction x(t) multiplie →i et la fonction y(t) multiplie →j.',
+  memo:'<p>Un vecteur position cartésien s’écrit :</p><div class="mathline">→OM(t) = x(t) →i + y(t) →j.</div><p>Les coefficients de →i et →j sont les coordonnées du point mobile.</p>',
+  solution:'<p><b>Étape 1 — Rappel.</b> On compare l’expression donnée avec la relation générale :</p><div class="mathline">→OM = x(t) →i + y(t) →j.</div><p><b>Étape 2 — Identification.</b> Le coefficient de →i donne x(t), celui de →j donne y(t).</p><div class="mathline">x(t) = 2t − 1 ; &nbsp; y(t) = t² − 4t + 3.</div><p class="conclusion">Les équations horaires sont celles du choix A.</p>'},
+ {id:2,section:'A',sectionTitle:'POSITION',sectionSub:'Évaluer les équations horaires',title:'Position initiale du mobile',prompt:'Déterminer les coordonnées de M à l’instant initial t = 0 s.',type:'numeric',fields:[{label:'x(0)',unit:'m',value:-1},{label:'y(0)',unit:'m',value:3}],
+  hint:'Remplacer t par 0 dans chacune des équations horaires, puis traiter séparément les termes constants.',
+  memo:'<p>À l’instant t₀, le point a pour coordonnées :</p><div class="mathline">M₀ ( x(t₀) ; y(t₀) ).</div><p>La position et le déplacement sont deux notions différentes.</p>',
+  solution:'<p><b>Étape 1 — Abscisse.</b></p><div class="mathline">x(0) = 2 × 0 − 1 = −1 m.</div><p><b>Étape 2 — Ordonnée.</b></p><div class="mathline">y(0) = 0² − 4 × 0 + 3 = 3 m.</div><p class="conclusion">Position initiale : <span class="resulttag">M₀(−1 ; 3) m</span>.</p>'},
+ {id:3,section:'A',sectionTitle:'POSITION',sectionSub:'Position du mobile à un instant donné',title:'Où est le mobile à t = 2 s ?',prompt:'En utilisant les équations horaires, calculer les coordonnées de M₂ = M(2 s).',type:'numeric',fields:[{label:'x(2)',unit:'m',value:3},{label:'y(2)',unit:'m',value:-1}],
+  hint:'Utiliser t = 2 dans x(t) et y(t) ; attention au signe du terme −4t.',
+  memo:'<p>Pour un instant donné t₁, on calcule :</p><div class="mathline">x₁ = x(t₁) ; &nbsp; y₁ = y(t₁).</div><p>La position M₁ est définie par le couple (x₁ ; y₁).</p>',
+  solution:'<p><b>Étape 1 — Abscisse.</b></p><div class="mathline">x(2) = 2 × 2 − 1 = 3 m.</div><p><b>Étape 2 — Ordonnée.</b></p><div class="mathline">y(2) = 2² − 4 × 2 + 3 = 4 − 8 + 3 = −1 m.</div><p class="conclusion">Position finale : <span class="resulttag">M₂(3 ; −1) m</span>.</p>'},
+ {id:4,section:'B',sectionTitle:'DÉPLACEMENT',sectionSub:'Différence entre deux vecteurs positions',title:'Le vecteur déplacement',prompt:'Entre t₀ = 0 s et t₂ = 2 s, déterminer les composantes du vecteur déplacement →Δr = →M₀M₂. Vous pouvez cocher « Déplacement » sur le graphique.',type:'numeric',fields:[{label:'Δx',unit:'m',value:4},{label:'Δy',unit:'m',value:-4}],
+  hint:'Soustraire les coordonnées initiales des coordonnées finales : Δx = x₂ − x₀ et Δy = y₂ − y₀.',
+  memo:'<p>Le déplacement ne dépend que des deux positions :</p><div class="mathline">→Δr = →r₂ − →r₀ = (x₂ − x₀) →i + (y₂ − y₀) →j.</div><p>Sa norme ne représente pas toujours la distance effectivement parcourue.</p>',
+  solution:'<p><b>Étape 1 — Formule vectorielle.</b></p><div class="mathline">→Δr = (x₂ − x₀) →i + (y₂ − y₀) →j.</div><p><b>Étape 2 — Substitution.</b> De M₀(−1 ; 3) à M₂(3 ; −1) :</p><div class="mathline">Δx = 3 − (−1) = 4 m ; &nbsp; Δy = −1 − 3 = −4 m.</div><div class="mathline">→Δr = 4 →i − 4 →j (m).</div><p><b>Complément.</b> La norme du déplacement vaut √(4² + (−4)²) = 4√2 ≈ 5,66 m.</p><p class="conclusion">Le déplacement est le segment orienté de M₀ vers M₂, et non la longueur de l’arc de parabole.</p>'},
+ {id:5,section:'B',sectionTitle:'VITESSE MOYENNE',sectionSub:'Une variation de position par unité de temps',title:'La vitesse moyenne vectorielle',prompt:'Calculer les composantes de →v<sub>moy</sub> sur l’intervalle [0 s ; 2 s].',type:'numeric',fields:[{label:'vₓ,moy',unit:'m/s',value:2},{label:'vᵧ,moy',unit:'m/s',value:-2}],
+  hint:'Diviser chaque composante du déplacement par la durée Δt = 2 − 0.',
+  memo:'<p>Vitesse moyenne vectorielle :</p><div class="mathline">→v<sub>moy</sub> = →Δr / Δt.</div><p>À distinguer de la vitesse moyenne scalaire, égale à la distance parcourue divisée par Δt.</p>',
+  solution:'<p><b>Étape 1 — Durée.</b></p><div class="mathline">Δt = t₂ − t₀ = 2 − 0 = 2 s.</div><p><b>Étape 2 — Définition.</b></p><div class="mathline">→v<sub>moy</sub> = →Δr / Δt = (4 →i − 4 →j) / 2.</div><div class="mathline">→v<sub>moy</sub> = 2 →i − 2 →j (m/s).</div><p><b>Complément.</b> Sa norme vaut √(2² + (−2)²) = 2√2 ≈ 2,83 m/s.</p><p class="conclusion">La vitesse moyenne vectorielle dépend du déplacement, pas de la longueur réelle de la trajectoire.</p>'},
+ {id:6,section:'B',sectionTitle:'TRAJECTOIRE',sectionSub:'Élimination du paramètre temps',title:'Quelle est la trajectoire ?',prompt:'Éliminer t entre x(t) et y(t). Quelle équation décrit la trajectoire du mobile ?',type:'choice',options:[
+  'y = (x² + 6x + 5)/4','y = (x² − 6x + 5)/2','y = (x² − 6x + 5)/4','y = (x² − 6x − 5)/4'],answer:2,
+  hint:'Isoler t dans x = 2t − 1, puis remplacer t par cette expression dans y(t). Développer et regrouper les termes.',
+  memo:'<p>Pour déterminer la trajectoire, éliminer t entre :</p><div class="mathline">x = x(t) ; &nbsp; y = y(t).</div><p>Une relation y = Ax² + Bx + C avec A ≠ 0 décrit une parabole.</p>',
+  solution:'<p><b>Étape 1 — Isoler le temps.</b> De x = 2t − 1 :</p><div class="mathline">t = (x + 1)/2.</div><p><b>Étape 2 — Substituer dans y(t).</b></p><div class="mathline">y = ((x + 1)/2)² − 4((x + 1)/2) + 3.</div><p><b>Étape 3 — Développer et réduire.</b></p><div class="mathline">y = (x² + 2x + 1)/4 − 2x + 1 = (x² − 6x + 5)/4.</div><p class="conclusion">La trajectoire est une <span class="resulttag">parabole</span> ouverte vers le haut, dont seule la portion x ≥ −1 est parcourue (t ≥ 0).</p>'},
+ {id:7,section:'C',sectionTitle:'DÉRIVÉES',sectionSub:'Des positions aux vecteurs cinématiques',title:'Vecteurs vitesse et accélération',prompt:'Quelle paire de vecteurs résulte de la dérivation de →r(t) = (2t − 1)→i + (t² − 4t + 3)→j ?',type:'choice',options:[
+  '→v = (2t − 1)→i + (t² − 4t + 3)→j ; →a = 2→j','→v = 2→i + (2t − 4)→j ; →a = 2→j','→v = 2→i + (t² − 4t + 3)→j ; →a = (2t − 4)→j','→v = (2t − 4)→i + 2→j ; →a = 2→i'],answer:1,
+  hint:'Dériver une première fois x(t), y(t) pour obtenir →v ; une seconde fois pour obtenir →a. Les vecteurs unitaires →i et →j sont fixes.',
+  memo:'<p>Dans un repère cartésien fixe :</p><div class="mathline">→v = x′(t)→i + y′(t)→j.</div><div class="mathline">→a = x″(t)→i + y″(t)→j.</div><p>Attention : la dérivée de t² est 2t.</p>',
+  solution:'<p><b>Étape 1 — Vitesse instantanée.</b></p><div class="mathline">vₓ = x′(t) = 2 ; &nbsp; vᵧ = y′(t) = 2t − 4.</div><div class="mathline">→v(t) = 2→i + (2t − 4)→j (m/s).</div><p><b>Étape 2 — Accélération instantanée.</b></p><div class="mathline">aₓ = v′ₓ = 0 ; &nbsp; aᵧ = v′ᵧ = 2.</div><div class="mathline">→a(t) = 2→j (m/s²).</div><p class="conclusion">Le vecteur accélération est constant, mais la norme de la vitesse n’est pas constante : la trajectoire est courbe.</p>'},
+ {id:8,section:'C',sectionTitle:'NORME',sectionSub:'Ne pas confondre vecteur et grandeur scalaire',title:'La vitesse à t = 1 s',prompt:'Calculer la norme de la vitesse v(1) = ‖→v(1)‖. Donner une valeur approchée au centième.',type:'numeric',fields:[{label:'v(1)',unit:'m/s',value:Math.sqrt(8),tol:0.015}],
+  hint:'Calculer d’abord les composantes vₓ(1) et vᵧ(1), puis utiliser la norme d’un vecteur dans une base orthonormée.',
+  memo:'<p>La valeur de la vitesse est une norme :</p><div class="mathline">v = ‖→v‖ = √(vₓ² + vᵧ²) ≥ 0.</div><p>Une composante de la vitesse peut être négative, jamais sa norme.</p>',
+  solution:'<p><b>Étape 1 — Vecteur vitesse à t = 1 s.</b></p><div class="mathline">→v(1) = 2→i + (2 × 1 − 4)→j = 2→i − 2→j.</div><p><b>Étape 2 — Norme.</b></p><div class="mathline">v(1) = √(2² + (−2)²) = √8 = 2√2.</div><p class="conclusion">Résultat : <span class="resulttag">v(1) ≈ 2,83 m/s</span>. La norme est positive même si vᵧ(1) est négative.</p>'},
+ {id:9,section:'D',sectionTitle:'FRENET',sectionSub:'La composante tangentielle se calcule par dérivation',title:'Accélération tangentielle',prompt:'Calculer a<sub>T</sub>(1) et a<sub>T</sub>(3) en dérivant la norme v(t). Arrondir au centième.',type:'numeric',fields:[{label:'aₜ(1)',unit:'m/s²',value:-Math.SQRT2,tol:0.015},{label:'aₜ(3)',unit:'m/s²',value:Math.SQRT2,tol:0.015}],
+  hint:'Écrire v(t) = √(4 + (2t − 4)²), puis appliquer la dérivée de √u : u′/(2√u). Ne pas dériver séparément les deux composantes pour obtenir aₜ.',
+  memo:'<p>Méthode principale de la base de Frenet :</p><div class="mathline">a<sub>T</sub>(t) = v′(t), &nbsp; v(t) = √(vₓ² + vᵧ²).</div><p>La relation v·a<sub>T</sub> = →v·→a peut servir à vérifier le calcul si v &gt; 0.</p>',
+  solution:'<p><b>Étape 1 — Valeur de la vitesse.</b></p><div class="mathline">v(t) = √(2² + (2t − 4)²) = 2√(1 + (t − 2)²).</div><p><b>Étape 2 — Dérivée.</b> On pose u(t) = 1 + (t − 2)² ; alors u′(t) = 2(t − 2).</p><div class="mathline">a<sub>T</sub>(t) = v′(t) = 2 × u′/(2√u) = 2(t − 2)/√(1 + (t − 2)²).</div><p><b>Étape 3 — Évaluation.</b></p><div class="mathline">a<sub>T</sub>(1) = −2/√2 = −√2 ≈ −1,41 m/s².</div><div class="mathline">a<sub>T</sub>(3) = 2/√2 = √2 ≈ +1,41 m/s².</div><p class="conclusion">Le signe de a<sub>T</sub> change au voisinage de t = 2 s. L’accélération tangentielle n’est pas constante.</p>'},
+ {id:10,section:'D',sectionTitle:'NATURE',sectionSub:'Déterminer si la vitesse augmente ou diminue',title:'Accéléré ou ralenti ?',prompt:'À partir du signe de P(t) = v(t)·a<sub>T</sub>(t), quelle conclusion décrit le mouvement à t = 1 s, puis à t = 3 s ?',type:'choice',options:[
+  'Ralenti à 1 s ; accéléré à 3 s','Accéléré à 1 s ; ralenti à 3 s','Uniforme aux deux instants','Uniformément accéléré pendant tout le mouvement'],answer:0,
+  hint:'La vitesse v est une norme et reste strictement positive ici. Étudier donc le signe du produit v·aₜ, ou directement le signe de aₜ.',
+  memo:'<p>Critère en base de Frenet (v &gt; 0) :</p><div class="mathline">v·a<sub>T</sub> &gt; 0 → mouvement accéléré.</div><div class="mathline">v·a<sub>T</sub> &lt; 0 → mouvement ralenti.</div><p>À un seul instant, un produit nul n’implique pas un mouvement uniforme sur un intervalle.</p>',
+  solution:'<p><b>Étape 1 — Produit en base de Frenet.</b></p><div class="mathline">v(t) = 2√(1 + (t − 2)²).</div><div class="mathline">a<sub>T</sub>(t) = 2(t − 2)/√(1 + (t − 2)²).</div><div class="mathline">P(t) = v(t)·a<sub>T</sub>(t) = 4(t − 2).</div><p><b>Étape 2 — Étude du signe.</b></p><div class="mathline">P(1) = −4 &lt; 0 : la vitesse diminue (mouvement ralenti).</div><div class="mathline">P(3) = +4 &gt; 0 : la vitesse augmente (mouvement accéléré).</div><p><b>Étape 3 — Instant critique.</b> À t = 2 s, P = 0 et v = 2 m/s : la vitesse atteint son minimum sans s’annuler.</p><p><b>Vérification cartésienne.</b> →v·→a = 2×0 + (2t − 4)×2 = 4(t − 2) = P(t).</p><p class="conclusion">Le mouvement est <span class="resulttag">ralenti pour 0 ≤ t &lt; 2 s</span>, puis <span class="resulttag">accéléré pour t &gt; 2 s</span>. Il n’est pas uniformément accéléré car a<sub>T</sub>(t) varie.</p>'}
+];
+const $=id=>document.getElementById(id);let index=0;let answers={};let reveals={};let seconds=90;let timer=null;let playing=false;let animationFrame=0;let lastAnimation=0;let time=1;
+const SVGNS='http://www.w3.org/2000/svg';
+function svgNode(tag,attrs,txt){const n=document.createElementNS(SVGNS,tag);for(const [k,v] of Object.entries(attrs||{}))n.setAttribute(k,v);if(txt!==undefined)n.textContent=txt;return n;}
+const fmt=(n,dec=2)=>Number(n).toLocaleString('fr-FR',{minimumFractionDigits:dec,maximumFractionDigits:dec});
+function p(t){return {x:2*t-1,y:t*t-4*t+3};}function speed(t){return 2*Math.sqrt(1+(t-2)*(t-2));}function vx(t){return 2;}function vy(t){return 2*t-4;}
+const mapX=x=>170+30*x, mapY=y=>315-30*y;
+function lineAttrs(el,x1,y1,x2,y2){el.setAttribute('x1',x1);el.setAttribute('y1',y1);el.setAttribute('x2',x2);el.setAttribute('y2',y2);}
+function pathUpTo(t){let d='';const steps=Math.max(1,Math.round(t*42));for(let k=0;k<=steps;k++){const r=p(t*k/steps);d+=(k?' L':'M')+mapX(r.x).toFixed(2)+','+mapY(r.y).toFixed(2);}return d;}
+function setupGraph(){const grid=$('gridLayer'),axis=$('axisLayer');
+  for(let x=-3;x<=12;x++){const xx=mapX(x);grid.append(svgNode('line',{x1:xx,y1:21,x2:xx,y2:362,class:'graph-grid'}));if(x===-2||x===-1||(x>0&&x%2===0))axis.append(svgNode('text',{x:xx-4,y:378,class:'graph-tick'},''+x));}
+  for(let y=-2;y<=9;y++){const yy=mapY(y);grid.append(svgNode('line',{x1:65,y1:yy,x2:568,y2:yy,class:'graph-grid'}));if(y>0&&y%2===0)axis.append(svgNode('text',{x:142,y:yy+4,class:'graph-tick'},''+y));}
+  axis.append(svgNode('line',{x1:65,y1:mapY(0),x2:580,y2:mapY(0),class:'graph-axis','marker-end':'url(#arrowPos)'}));axis.append(svgNode('line',{x1:mapX(0),y1:364,x2:mapX(0),y2:15,class:'graph-axis','marker-end':'url(#arrowPos)'}));axis.append(svgNode('text',{x:583,y:mapY(0)+5,class:'graph-note'},'x (m)'));axis.append(svgNode('text',{x:mapX(0)+9,y:17,class:'graph-note'},'y (m)'));axis.append(svgNode('text',{x:mapX(0)-14,y:mapY(0)+14,class:'graph-note'},'O'));
+  const A=p(0),B=p(2);for(const [number,v] of [['0',A],['2',B]]){const xx=mapX(v.x),yy=mapY(v.y);$('fixed'+number).setAttribute('cx',xx);$('fixed'+number).setAttribute('cy',yy);$('fixed'+number+'label').setAttribute('x',xx+(number==='0'?-30:10));$('fixed'+number+'label').setAttribute('y',yy-10);}
+  lineAttrs($('deltaVector'),mapX(A.x),mapY(A.y),mapX(B.x),mapY(B.y));$('fullPath').setAttribute('d',pathUpTo(5));
+  let d='';for(let i=0;i<=90;i++){const t=i/90*5;const sp=speed(t);const x=409+t/5*203,y=121-(sp-1.8)/7.2*71;d+=(i?' L':'M')+x.toFixed(2)+','+y.toFixed(2)}$('speedPath').setAttribute('d',d);
+  ['positionToggle','velocityToggle','accelToggle','deltaToggle','speedToggle'].forEach(id=>$(id).addEventListener('change',updateGraph));
+  $('timeSlider').addEventListener('input',e=>{setTime(Number(e.target.value));});$('playBtn').addEventListener('click',()=>playing?stopAnimation():startAnimation());setTime(1);
+}
+function updateGraph(){const m=p(time),xx=mapX(m.x),yy=mapY(m.y);$('timeBadge').textContent=fmt(time)+' s';$('timeSlider').value=String(time);$('readPosition').textContent='('+fmt(m.x)+' ; '+fmt(m.y)+') m';$('readSpeed').textContent=fmt(speed(time))+' m/s';$('traveledPath').setAttribute('d',pathUpTo(time));
+  for(const k of ['mobile','mobileGlow']){$(k).setAttribute('cx',xx);$(k).setAttribute('cy',yy)}$('mobileLabel').setAttribute('x',xx+10);$('mobileLabel').setAttribute('y',yy-12);
+  lineAttrs($('positionVector'),mapX(0),mapY(0),xx,yy);
+  lineAttrs($('velocityVector'),xx,yy,xx+9*vx(time),yy-9*vy(time));
+  lineAttrs($('accelVector'),xx,yy,xx,yy-52);
+  $('positionVector').style.display=$('positionToggle').checked?'':'none';$('velocityVector').style.display=$('velocityToggle').checked?'':'none';$('accelVector').style.display=$('accelToggle').checked?'':'none';$('deltaVector').style.display=$('deltaToggle').checked?'':'none';$('speedInset').classList.toggle('show',$('speedToggle').checked);
+  $('speedDot').setAttribute('cx',409+time/5*203);$('speedDot').setAttribute('cy',121-(speed(time)-1.8)/7.2*71);
+}
+function setTime(t){time=Math.max(0,Math.min(5,Math.round(t*100)/100));updateGraph();}
+function animationLoop(ts){if(!playing)return;if(lastAnimation){const dt=Math.min(.05,(ts-lastAnimation)/1000);let next=time+dt*.78;if(next>5)next=0;setTime(next);}lastAnimation=ts;animationFrame=requestAnimationFrame(animationLoop)}
+function startAnimation(){playing=true;lastAnimation=0;$('playBtn').textContent='Ⅱ Pause';animationFrame=requestAnimationFrame(animationLoop)}
+function stopAnimation(){playing=false;cancelAnimationFrame(animationFrame);$('playBtn').textContent='▶ Animer';}
+function getScore(){return QUESTIONS.filter((q,i)=>reveals[i]&&reveals[i].correct).length;}
+function getFilled(q,i){const a=answers[i];if(q.type==='choice')return Number.isInteger(a);if(!Array.isArray(a))return false;return a.some(x=>String(x||'').trim()!=='');}
+function parseNumber(x){let s=String(x||'').trim().replace(/[\u2212\u2013\u2014]/g,'-').replace(/\s/g,'').replace(',','.');if(!s)return NaN;if(!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(s))return NaN;return Number(s);}
+function evaluate(q,i){const a=answers[i];if(q.type==='choice')return Number.isInteger(a)&&a===q.answer;if(!Array.isArray(a))return false;return q.fields.every((f,j)=>{const val=parseNumber(a[j]);return Number.isFinite(val)&&Math.abs(val-f.value)<=(f.tol??0.0001);});}
+function resetQuestionTimer(){stopTimer();seconds=90;showTimer();}
+function showTimer(){const el=$('timerText');el.textContent='⏱ '+seconds+' s';el.classList.toggle('urgent',seconds<=15);}
+function stopTimer(){if(timer!==null){clearInterval(timer);timer=null;}$('timerBtn').textContent='▶ Chrono';}
+function toggleTimer(){if(timer!==null){stopTimer();return;}if(seconds<=0){seconds=90;showTimer();}timer=setInterval(()=>{seconds--;showTimer();if(seconds<=0){stopTimer();$('timerText').textContent='⏱ Temps écoulé';}},1000);$('timerBtn').textContent='Ⅱ Pause chrono';}
+function setExpanded(buttonId,panelId,shown){$(panelId).hidden=!shown;$(buttonId).setAttribute('aria-expanded',String(shown));}
+function render(keepTimer=false){if(index<0||index>=QUESTIONS.length)return;$('challengeStage').style.display='block';$('finish').style.display='none';const q=QUESTIONS[index],done=reveals[index];$('progressBar').style.width=((index+1)/QUESTIONS.length*100)+'%';$('sectionName').textContent='PARTIE '+q.section+' · '+q.sectionTitle;$('sectionSubtitle').textContent=q.sectionSub;$('qNum').textContent=String(index+1).padStart(2,'0');$('qTitle').textContent=q.title;$('qPrompt').innerHTML=q.prompt; // source-owned authored HTML only
+  const area=$('answerArea');area.replaceChildren();if(q.type==='choice'){
+    const grid=document.createElement('div');grid.className='choices';const letters='ABCD';q.options.forEach((v,n)=>{const b=document.createElement('button');b.className='choice';b.type='button';if(answers[index]===n)b.classList.add('selected');if(done&&n===q.answer)b.classList.add('correct');if(done&&answers[index]===n&&n!==q.answer)b.classList.add('wrong');b.disabled=Boolean(done);const l=document.createElement('span');l.className='letter';l.textContent=letters[n];const txt=document.createElement('span');txt.className='ctext';txt.textContent=v;b.append(l,txt);b.addEventListener('click',()=>{if(reveals[index])return;answers[index]=n;grid.querySelectorAll('.choice').forEach((c,j)=>c.classList.toggle('selected',j===n));});grid.append(b)});area.append(grid);
+  }else{
+    const grid=document.createElement('div');grid.className='numfields';const prev=Array.isArray(answers[index])?answers[index]:q.fields.map(()=>''),fresh=[];
+    q.fields.forEach((f,j)=>{const cell=document.createElement('div');cell.className='numfield';const label=document.createElement('label');const inp=document.createElement('input');const id='response-'+j;label.htmlFor=id;label.textContent=f.label;const wrap=document.createElement('div');wrap.className='inputwrap';inp.id=id;inp.type='text';inp.inputMode='decimal';inp.autocomplete='off';inp.spellcheck=false;inp.placeholder='…';inp.value=prev[j]??'';inp.disabled=Boolean(done);if(done){const numeric=parseNumber(prev[j]);cell.classList.add(Number.isFinite(numeric)&&Math.abs(numeric-f.value)<=(f.tol??.0001)?'good':'bad');}inp.addEventListener('input',()=>{const arr=Array.isArray(answers[index])?answers[index]:q.fields.map(()=>''),b=arr.slice();b[j]=inp.value;answers[index]=b;});inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!reveals[index]){e.preventDefault();reveal()}});const unit=document.createElement('span');unit.className='unit';unit.textContent=f.unit;wrap.append(inp,unit);cell.append(label,wrap);grid.append(cell);fresh.push(inp)});area.append(grid);const note=document.createElement('div');note.className='inputtip';note.textContent='Saisir uniquement les nombres (virgule ou point acceptés).';area.append(note);
+  }
+  $('hintPanel').innerHTML='<h4>Indice sans résultat</h4><p></p>';$('hintPanel').querySelector('p').textContent=q.hint;
+  $('memoPanel').innerHTML='<h4>Rappel de cours · Fiche mémo V2</h4>'+q.memo;
+  setExpanded('hintBtn','hintPanel',false);setExpanded('memoBtn','memoPanel',false);
+  const fb=$('feedback');fb.hidden=!done;fb.className='feedback';if(done){const found=getFilled(q,index);const yes=done.correct;if(yes){fb.classList.add('pass');fb.textContent='✓ Bonne réponse — les étapes sont expliquées ci-dessous.';}else if(found){fb.classList.add('fail');fb.textContent='✕ À revoir — comparez votre méthode avec la correction détaillée.';}else{fb.classList.add('skip');fb.textContent='Correction consultée sans réponse : aucun point attribué.';}}
+  $('solution').hidden=!done;$('solutionContent').innerHTML=done?q.solution:'';$('revealBtn').disabled=Boolean(done);$('revealBtn').textContent=done?'✓ Correction affichée':'✓ Valider & corriger';$('prevBtn').disabled=index===0;$('nextBtn').textContent=index===QUESTIONS.length-1?'Terminer →':'Suivant →';$('scoreText').textContent='★ '+getScore()+' / '+QUESTIONS.length;if(!keepTimer)resetQuestionTimer();}
+function reveal(){if(reveals[index])return;const q=QUESTIONS[index];reveals[index]={correct:evaluate(q,index)};stopTimer();render(true);}
+function next(){if(index===QUESTIONS.length-1){showFinish();return;}index++;render();}
+function prev(){if(index<=0)return;index--;render();}
+function showFinish(){stopTimer();stopAnimation();$('challengeStage').style.display='none';$('finish').style.display='block';$('progressBar').style.width='100%';const sc=getScore(),answered=Object.keys(reveals).length;$('finishScore').textContent=sc+' / '+QUESTIONS.length;$('finishMessage').textContent='Vous avez consulté '+answered+' correction'+(answered>1?'s':'')+' sur '+QUESTIONS.length+'. '+(sc>=8?'Excellent raisonnement cinématique !':sc>=5?'Bonne progression : reprenez les étapes encore délicates.':'Pour progresser, reprenez les corrections et utilisez les rappels de la fiche mémo.');}
+function resetAll(){answers={};reveals={};index=0;setTime(1);render();}
+function toggleFull(){if(!document.fullscreenElement){const req=document.documentElement.requestFullscreen;if(req)req.call(document.documentElement).catch(()=>{});}else if(document.exitFullscreen){document.exitFullscreen().catch(()=>{});}}
+$('revealBtn').addEventListener('click',reveal);$('nextBtn').addEventListener('click',next);$('prevBtn').addEventListener('click',prev);$('timerBtn').addEventListener('click',toggleTimer);$('fullBtn').addEventListener('click',toggleFull);
+$('hintBtn').addEventListener('click',()=>setExpanded('hintBtn','hintPanel',$('hintPanel').hidden));$('memoBtn').addEventListener('click',()=>setExpanded('memoBtn','memoPanel',$('memoPanel').hidden));$('reviewBtn').addEventListener('click',()=>{index=0;render()});$('resetBtn').addEventListener('click',resetAll);
+document.addEventListener('keydown',e=>{const target=e.target;const formFocus=target instanceof HTMLElement&&(target.matches('input,textarea,select')||target.isContentEditable);if(formFocus)return;if(e.ctrlKey||e.altKey||e.metaKey)return;const k=e.key.toLowerCase();if(k==='f'){toggleFull();return;}if($('finish').style.display==='block')return;if(k==='arrowright'){e.preventDefault();next()}else if(k==='arrowleft'){e.preventDefault();prev()}else if(k===' '){e.preventDefault();reveal()}else if(QUESTIONS[index].type==='choice'&&!reveals[index]){const letters='abcd',i=letters.indexOf(k);const j='1234'.indexOf(k);const pos=i>=0?i:j;if(pos>=0&&pos<4){answers[index]=pos;document.querySelectorAll('.choice').forEach((c,j)=>c.classList.toggle('selected',j===pos));}}});
+
+// Codes S2S existants (SHA-256 seulement, sans noms et sans codes en clair).
+// IMPORTANT : un site statique ne réalise PAS une authentification sûre.
+const APPROVED_S2S_DIGESTS = new Set([
+  'e8b3567cc9c23dcf5f4cacc020568249ead99ba41010d5249b7fee4080d78f81',
+  'be3fa69949e06cdb0856eb2cf2f98e33e95f4a3ca7475630f712dd00025239ba',
+  'bacbc696238f50bbd92245301d23763dba5fab49c4368d35d45d39fcbf0a3320',
+  'cea33587fe090f690ff9d467e766cfa8ceb01d8e8003a9ad4441d9f3fce58a5f',
+  'e02c51bc075f523ecdadbf397d58f5c4d678b689ce4162e0aeb4ebce7c9ea662',
+  'e363ecc18023e27023ef7775b76724d3ded0e470a9d02fb9a49b02b64c33311e',
+  'adb5fb0cd018e9cb54942b888a7012a6e21f350dfe9ff08a7f6c1682e1c83c6e',
+  'd9f3910dcdfab1a8e3a9194fc9536478bef401d2d1eece937d13be7ded4394ad',
+  'b7abb4e3d3ad01e2490c303f25afac29885a08c65a5e50a00b5dddbb9c431941',
+  '02509396725d841089b3c35faca63022741b319a9a30ca3bd770a3fa5056fbf1',
+  '3c13c37954b1b284606f10e12e2d58dc7b294252c3acd8f52ba3336243d66798',
+  '4337ba93591a92234723a13ad9ad079162dff3b223041edb478c5b54217d1184',
+  '582b39bd10e3aedf086922403b0a5e4f28954262d0c00226b711a647d1e4223a',
+  '33d7c1e3cdd7de088687c900f7a3118480e54f5f887ac03cdddd73c6f6f8f795',
+  '5ac822759eaec4ccfc49a77e9eccb724e25e2b7f24dda43ab8ac1099f31f9d78',
+  '0275d876f2e571b1fc17c126d5ac1db0c62a2c00e154254d313dba7530fff909',
+  '6bc7f9dff52dfcd0a1332bc87241539ade184384609ffb3663695474da69b8ec',
+  '46a8411590513b721474ec9134c7c90a21b8b0de2b9c8e9691a51c2ef0d04244',
+  '4bf78b434caec0d9312d596503608256a09d63dca3ca7ea511392adc500b88d2',
+  'baa2ade252accde483417b144fd5d45ff66ef7eada41dda64a7e6b18f5cf3ab1',
+  'b49fec914a6c901f3fc24a6e339be41c71307349961ca6fa4f6dd3aa57cb2bd6',
+  '5d352bd426a29f186ab3692d5f4a1c3e47628b89acfaa709a5199699eed0fe9a',
+  '793db4c472467afbd02e9e95b819755dfb67bf8cb03c9fd3f94c760f0fa5256d',
+  'bbb3b859b7036c5ba7a72b0537df7301e1eb1b4a81dc7499c1451382d0f0085a',
+  '031513b165cf32ef104b69290c432a366fb2f568117a6eae118915516043b53a',
+  '32b39b605172a1a6e8519871d43ba948149ac756175df008f23871fc6a1c574b',
+  '182c8297c2bae0e59d6f4e3e7518f4924749ebe01e58588fafc3955930c2c819',
+  'd24630732d47f052b23446416e5eaf5010740ec9404b8eb1bd6e28cc1586f6af',
+  'dba437be2a17f7223b3239b8a7e5aa839f561f30f561eed04109fe486044b198',
+  'b2a61ef341d1908b94354fc2e03814f3aa36f0b3b15f662b698c3175e86c2cce'
+]);
+async function digestS2S(code){
+  if(!window.crypto || !window.crypto.subtle)throw new Error('cryptographie indisponible');
+  const raw = new TextEncoder().encode('S2S-2027/CARTESIENNE|' + code);
+  const sum = await window.crypto.subtle.digest('SHA-256',raw);
+  return Array.from(new Uint8Array(sum), n=>n.toString(16).padStart(2,'0')).join('');
+}
+const accessForm = document.getElementById('accessForm');
+accessForm.addEventListener('submit',async function(event){
+ event.preventDefault();
+ const userCode=document.getElementById('studentAccessCode').value.trim().toLowerCase();
+ const error=document.getElementById('accessError'),btn=document.getElementById('unlockBtn');
+ error.textContent='';
+ if(!/^s2s[0-9]{4}$/.test(userCode)) {error.textContent='Format attendu : s2s suivi de 4 chiffres.';return;}
+ btn.disabled=true;btn.textContent='Vérification…';
+ try{
+   const digest=await digestS2S(userCode);
+   if(APPROVED_S2S_DIGESTS.has(digest)){
+     document.getElementById('accessGate').hidden=true;
+     document.getElementById('activityShell').hidden=false;
+     document.getElementById('studentAccessCode').value='';
+     window.scrollTo({top:0,behavior:'instant'});
+   }else{
+     error.textContent='Code non reconnu. Vérifiez votre code S2S personnel.';
+   }
+ }catch(err){error.textContent='Impossible de vérifier le code dans cet aperçu. Ouvrez la page avec Chrome ou Edge.';}
+ finally{btn.disabled=false;btn.textContent='Accéder à la fiche →';}
+});
+
+setupGraph();render();
+</script>
+</body>
+</html>
