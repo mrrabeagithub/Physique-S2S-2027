@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#09182b">
+<title>Eval 05 - Force parallèle au mouvement</title>
+<style>
+:root{--bg:#08172c;--bg2:#0e2942;--ink:#f7fbff;--teal:#49e0c7;--gold:#f8b65b;--muted:#b6c8dc;--card:#10273f;--line:#2b4864;--green:#43e2ad;--red:#ff7283;--choice:#17324d}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-height:100vh;background:radial-gradient(circle at 4% 5%,#184b67 0%,transparent 33%),radial-gradient(circle at 90% 84%,#153a64 0%,transparent 27%),var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;overflow-x:hidden}
+button{font:inherit;cursor:pointer}button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}.shell{width:min(1480px,97vw);margin:auto;padding:18px 24px 26px}.top{display:flex;justify-content:space-between;align-items:center;gap:15px}.identity{display:flex;gap:12px;align-items:center}.logo{height:46px;width:46px;border-radius:14px;background:linear-gradient(135deg,var(--teal),#208fc7);color:#082034;display:grid;place-items:center;font-weight:1000;font-size:24px;box-shadow:0 8px 25px #45dbc955}.identity strong{font-size:17px;display:block;letter-spacing:.2px}.identity small{color:var(--muted);font-size:12px}.top-right{display:flex;gap:10px;flex-wrap:wrap;justify-content:end}.chip{background:#12304b;border:1px solid var(--line);color:#d6eaff;padding:9px 12px;border-radius:100px;font-weight:750;font-size:12px}.chip.accent{color:#041d29;background:var(--teal);border-color:var(--teal)}.chip.gold{color:var(--gold)}.main{border:1px solid #3a5876;border-radius:28px;overflow:hidden;margin-top:16px;background:linear-gradient(150deg,#152f4b 0%,#0d2239 80%);box-shadow:0 30px 65px #030b1c90}.progress-track{height:7px;background:#264660}.progress-bar{height:100%;background:linear-gradient(90deg,var(--teal),#f6b45e);width:0;transition:width .35s}.stage{padding:clamp(20px,2.6vw,36px)}.stage-head{display:flex;align-items:center;justify-content:space-between;gap:20px}.eyebrow{font-size:clamp(11px,1vw,15px);font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--teal)}.round-name{font-weight:650;color:var(--muted);margin-top:6px;font-size:clamp(13px,1.25vw,17px)}.qcount{color:#7ab7d6;font-size:clamp(40px,5vw,68px);font-weight:950;letter-spacing:-.05em}.qcount span{font-size:20px;color:#79a0bd;letter-spacing:0}.question{font-size:clamp(23px,2.45vw,37px);line-height:1.22;font-weight:840;letter-spacing:-.02em;max-width:1300px;margin:16px 0 20px;min-height:70px}.choices{display:grid;grid-template-columns:1fr 1fr;gap:12px}.choice{display:flex;align-items:center;gap:14px;width:100%;background:var(--choice);color:var(--ink);border:2px solid #31516c;border-radius:16px;padding:12px 16px;text-align:left;min-height:72px;transition:background .12s,border .12s,transform .12s}.choice:hover{background:#1b4060;border-color:#72b8d7;transform:translateY(-2px)}.choice .letter{display:grid;place-items:center;width:41px;height:41px;flex:0 0 41px;border-radius:11px;background:#2d5270;color:#aeeada;font-weight:900;font-size:20px}.choice .txt{font-size:clamp(17px,1.65vw,24px);font-weight:740;line-height:1.25}.choice.selected{border-color:var(--gold);background:#3b3943}.choice.selected .letter{background:var(--gold);color:#1c2736}.choice.correct{border-color:var(--green)!important;background:#174b46!important}.choice.correct .letter{background:var(--green)!important;color:#072a23!important}.choice.wrong{border-color:var(--red)!important;background:#58313d!important}.choice.wrong .letter{background:var(--red)!important;color:#331b24!important}.choice:disabled{cursor:default;transform:none}.solution{display:none;background:linear-gradient(120deg,#153f48,#183249);margin-top:14px;border:1px solid #31b9ad;border-left:6px solid var(--green);border-radius:14px;padding:14px 18px;font-size:clamp(16px,1.35vw,20px);line-height:1.4}.solution.show{display:block}.solution strong{color:var(--green);display:block;margin-bottom:5px}.hint{display:none;color:#fee0a6;margin:10px 0 0;font-size:clamp(14px,1.2vw,17px)}.hint.show{display:block}.bottom{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-top:18px;flex-wrap:wrap}.actions{display:flex;gap:8px;flex-wrap:wrap}.btn{background:#193651;border:1px solid #456581;color:#e5f1ff;border-radius:13px;padding:11px 16px;font-weight:770;font-size:14px;min-height:45px}.btn:hover{background:#284a69}.btn:disabled{opacity:.4;cursor:not-allowed}.btn.primary{background:var(--teal);color:#09263a;border-color:var(--teal);font-weight:900}.btn.secondary{background:#efae4c;border-color:#efae4c;color:#092034}.status{color:var(--muted);font-size:13px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}.pill{display:inline-flex;align-items:center;gap:8px;border-radius:100px;background:#112d49;border:1px solid #315d7a;padding:7px 12px;font-weight:850;color:#c4dbe9}.footer{text-align:center;color:#8cacbf;font-size:12px;margin-top:14px}.spark{position:fixed;border-radius:50%;background:#49e0c7;box-shadow:0 0 10px #49e0c7;opacity:.2;pointer-events:none;animation:float 18s linear infinite}.spark.a{width:9px;height:9px;left:3%;top:28%}.spark.b{width:5px;height:5px;left:92%;top:14%;animation-delay:-7s}.spark.c{width:7px;height:7px;left:79%;top:91%;animation-delay:-11s}@keyframes float{50%{transform:translate(30px,-70px);opacity:.4}}#finish{display:none;text-align:center;padding:28px 18px}#finish h2{font-size:clamp(28px,4vw,56px);margin:0 0 10px}#finish .bigscore{font-size:clamp(65px,11vw,126px);font-weight:1000;color:var(--teal)}#finish p{font-size:19px;color:#d6e6f1}.timer-warning{color:var(--gold)!important}.stamp{color:#93c6d8}.kbd{font-size:11px;color:#95bbcc;margin-top:12px;text-align:center}.diagram{display:none;justify-content:center;background:#0e2c46;border:1px solid #36617a;border-radius:14px;margin:-1px 0 18px;padding:8px;max-height:145px}.diagram.show{display:flex}.diagram svg{width:min(650px,100%);height:118px}.note{font-size:12px;color:#b6c8dc;margin-top:8px}
+@media(max-width:860px){.shell{padding:10px 10px 22px}.stage{padding:20px 13px}.choices{grid-template-columns:1fr}.question{min-height:auto;font-size:clamp(22px,5vw,31px)}.choice{min-height:60px;padding:10px 12px}.choice .letter{width:34px;height:34px;flex-basis:34px;font-size:15px}.choice .txt{font-size:clamp(16px,4vw,21px)}.identity small{font-size:10px}.top-right .chip{font-size:11px;padding:6px 9px}.qcount{font-size:44px}.stage-head{align-items:flex-start}.bottom{align-items:flex-start}}@media (max-height:800px) and (min-width:861px){.stage{padding:20px 30px}.question{margin:12px 0 16px;font-size:clamp(22px,2.1vw,32px);min-height:62px}.choice{min-height:66px;padding:11px 14px}.choice .txt{font-size:clamp(17px,1.55vw,22px)}.bottom{margin-top:13px}.diagram{margin-bottom:12px}.diagram svg{height:95px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+.scenario{background:linear-gradient(90deg,#114455,#16314a);border:1px solid #3b7780;color:#dbfffa;border-radius:11px;font-weight:750;letter-spacing:.015em;padding:11px 16px;font-size:clamp(12px,1.25vw,17px);margin-top:15px}
+.solution.incorrect{background:linear-gradient(125deg,#3b2839,#263244);border-color:#ff7283;border-left-color:#ff7283}
+.solution.incorrect strong{color:#ff9ea8}
+.diagram{display:flex;max-height:160px}.diagram svg{height:125px}
+@media(max-width:860px){.scenario{padding:9px;font-size:13px;line-height:1.4}.diagram{padding:3px}.diagram svg{height:100px}.question{font-size:clamp(22px,5vw,31px);line-height:1.22}}
+@media(max-height:800px) and (min-width:861px){.scenario{margin-top:9px;padding:8px 12px}.diagram svg{height:100px}.question{margin:10px 0}}
+@media(max-height:800px) and (min-width:861px){.shell{padding-bottom:10px}.stage{padding:14px 30px}.bottom{margin-top:8px}.choice{min-height:62px}.question{margin:8px 0}.diagram svg{height:90px}.scenario{margin-top:7px}}
+[hidden]{display:none!important}
+#access{margin:16px 0;display:flex;align-items:end;flex-wrap:wrap;gap:12px}
+#access label{display:grid;gap:6px}#access input{font:inherit;padding:.65rem;border-radius:.5rem;border:1px solid var(--line);color:var(--ink);background:var(--card)}
+#receipt{min-height:1.5em;color:var(--muted)}
+</style></head><body>
+<span class="spark a"></span><span class="spark b"></span><span class="spark c"></span>
+<div class="shell">
+<header class="top"><div class="identity"><div class="logo">⚡</div><div><strong id="identityTitle">APPLICATION 01 · S2S</strong><small id="identitySmall">Chapitre 8 • 2026–2027</small></div></div><div class="top-right"><span class="chip accent" id="totalChip">8 étapes</span><span class="chip gold" id="roundChip">APP 01</span><button class="chip" id="fullBtn" type="button" title="Plein écran (F)">⛶ Plein écran</button></div></header>
+<form id="access"><label for="studentCode">Code personnel S2S <input id="studentCode" required pattern="[sS]2[sS][0-9]{4}" maxlength="7" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="s2s…"></label><button class="btn primary" type="submit">Ouvrir Eval 05</button></form>
+<p id="receipt" role="status" aria-live="polite"></p>
+<main class="main" id="activity" hidden><div class="progress-track"><div class="progress-bar" id="bar"></div></div><div class="stage" id="quizStage"><div class="stage-head"><div><div class="eyebrow" id="sectionShort">BILAN DES FORCES</div><div class="round-name" id="sectionName">Partie 1 · Forces extérieures</div></div><div class="qcount"><span id="currentNum">01</span><span id="totalNum">/8</span></div></div>
+<div class="scenario" id="scenario" aria-live="polite"></div><div class="question" id="question" aria-live="polite"></div><div class="diagram" id="diagram" aria-hidden="true"></div><div class="choices" id="choices"></div><div class="hint" id="hint"></div><div class="solution" id="solution" aria-live="polite"><strong id="solutionHeading">✓ Explication</strong><span id="solutionText"></span></div>
+<div class="bottom"><div class="actions"><button class="btn" id="prevBtn" type="button">← Précédente</button><button class="btn" id="hintBtn" type="button">💡 Indice</button><button class="btn secondary" id="revealBtn" type="button">✓ Afficher la solution</button><button class="btn primary" id="nextBtn" type="button">Suivante →</button></div><div class="status"><span class="pill" id="scoreDisplay">Score : 0/0</span></div></div><div class="kbd">Choisissez une réponse, puis cliquez sur « Afficher la solution » pour la verrouiller et lire l’explication. À la fin, cliquez sur « Remettre mes réponses ».</div></div>
+<div id="finish"><h2>Application 1 terminée !</h2><div class="bigscore" id="finalScore">0/8</div><p id="finalText">Bravo pour votre participation.</p><div class="actions" style="justify-content:center"><button class="btn" id="reviewBtn">← Revoir les questions</button><button class="btn primary" id="send" type="button">Remettre mes réponses</button></div></div></main>
+<div class="footer"><span class="stamp" id="credit">Prepared by Physics teacher Rabih Abdel Ghafour</span> · S2S · 2026–2027 · Eval 05 · Connexion Internet requise</div></div>
+<script>
+'use strict';
+const DATA = {"title":"APPLICATION INTERACTIVE · S2S","chapter":"Chapitre 8","subject":"App 01 — Force parallèle au mouvement","schoolYear":"2026–2027","author":"Prepared by Physics teacher Rabih Abdel Ghafour","timerSeconds":60,"sections":{"A":["Partie 1 • Bilan des forces","BILAN DES FORCES"],"B":["Partie 2 • Deuxième loi de Newton","ACCÉLÉRATION"],"C":["Partie 3 • Mouvement sur 10 secondes","MOUVEMENT RECTILIGNE"],"D":["Partie 4 • Traction opposée","FREINAGE"],"E":["Partie 5 • Avec frottement","FROTTEMENT"]},"questions":[{"section":"A","q":"1. Quelles sont les forces extérieures exercées sur la boîte dans la situation initiale (sol lisse) ?","o":["Son poids P, la réaction normale N et la traction F","Seulement son poids P et la traction F","Son poids P, la réaction N, la traction F et un frottement f","Seulement la traction F, car la boîte avance"],"a":0,"solution":"Bilan des forces : P = m g (vers le bas), N (vers le haut) et F = 300 N (vers la droite). La surface est lisse : aucun frottement n’est pris en compte. Verticalement, N = P = mg = 150 N.","hint":"Distingue les interactions Terre/boîte, sol/boîte et traction/boîte. Le sol est sans frottement.","diagram":"initial","n":1},{"section":"B","q":"2. En projetant la deuxième loi de Newton sur l’axe (Ox) orienté vers la droite, quelle accélération obtient-on ?","o":["aₓ = +20 m/s²","aₓ = −20 m/s²","aₓ = +10 m/s²","aₓ = +30 m/s²"],"a":0,"solution":"Dans le référentiel terrestre supposé galiléen : ΣFext = m a. Sur Ox, Pₓ = Nₓ = 0 et Fₓ = +300 N ; donc maₓ = 300. Ainsi aₓ = 300/15 = +20 m/s² (vers la droite).","hint":"Le poids et la réaction normale sont verticaux : leur projection sur Ox est nulle.","diagram":"initial","n":2},{"section":"C","q":"3. Quelle est la nature du mouvement lorsque la traction de 300 N est constante vers la droite ?","o":["Mouvement rectiligne uniforme (MRU)","Mouvement circulaire uniforme","Mouvement rectiligne uniformément accéléré (MRUA)","Mouvement rectiligne uniformément décéléré (MRUD)"],"a":2,"solution":"La trajectoire est rectiligne et l’accélération aₓ = +20 m/s² est constante et dirigée dans le sens de v₀. La vitesse augmente : c’est un mouvement rectiligne uniformément accéléré (MRUA).","hint":"Compare le sens de l’accélération et celui de la vitesse initiale.","diagram":"initial","n":3},{"section":"C","q":"4. Quelle vitesse la boîte acquiert-elle après 10 s, sous cette traction constante ?","o":["195 m/s","205 m/s","200 m/s","25 m/s"],"a":1,"solution":"En MRUA : v(t) = v₀ + a t. À t = 10 s : v = 5 + 20 × 10 = 205 m/s. Le signe positif indique un mouvement vers la droite.","hint":"Utilise v = v₀ + at. N’oublie pas la vitesse initiale de 5 m/s.","diagram":"initial","n":4},{"section":"C","q":"5. Quelle distance la boîte parcourt-elle pendant les 10 premières secondes ?","o":["1 000 m","2 050 m","1 050 m","500 m"],"a":2,"solution":"Le déplacement est d = v₀ t + ½ a t². Avec v₀ = 5 m/s, a = +20 m/s², t = 10 s : d = 5×10 + ½×20×10² = 50 + 1 000 = 1 050 m.","hint":"Pour une accélération constante : d = v₀t + ½at². Attention au carré du temps.","diagram":"initial","n":5},{"section":"D","q":"6. La traction de 300 N est maintenant dirigée vers la gauche, alors que la boîte se déplace encore vers la droite. Quelle affirmation est correcte AVANT l’arrêt ?","o":["aₓ = +20 m/s² ; la boîte accélère vers la droite","aₓ = 0 ; le mouvement reste uniforme","aₓ = −20 m/s² ; la boîte ralentit uniformément","aₓ = −300 m/s² ; la boîte s’arrête immédiatement"],"a":2,"solution":"L’axe Ox est orienté vers la droite et la traction devient Fₓ = −300 N. Donc aₓ = −300/15 = −20 m/s². Tant que vₓ \u003e 0, l’accélération est opposée à la vitesse : mouvement rectiligne uniformément décéléré (MRUD).","hint":"Une force vers la gauche a une projection négative sur un axe orienté vers la droite.","diagram":"reverse","n":6},{"section":"D","q":"7. Dans ce cas de traction opposée, combien de temps faut-il pour arrêter la boîte initialement à 5 m/s ?","o":["4 s","0,25 s","1 s","0,50 s"],"a":1,"solution":"À l’arrêt, v = 0. L’équation v = v₀ + at devient 0 = 5 − 20t ; donc t = 5/20 = 0,25 s. Ceci correspond au premier instant d’arrêt.","hint":"Pose v = 0 dans v = v₀ + at avec a = −20 m/s².","diagram":"reverse","n":7},{"section":"E","q":"8. On revient à la traction de 300 N vers la droite, mais un frottement de 45 N agit vers la gauche. Quelle est la nouvelle accélération ?","o":["23 m/s² vers la droite","−17 m/s² vers la gauche","3 m/s² vers la droite","17 m/s² vers la droite"],"a":3,"solution":"Sur Ox : ΣFₓ = F − f = 300 − 45 = 255 N. La deuxième loi donne aₓ = (F − f)/m = 255/15 = +17 m/s², dirigée vers la droite.","hint":"Les forces horizontales se soustraient, car elles sont opposées. Puis applique ΣFₓ = maₓ.","diagram":"friction","n":8}]};
+const qs=DATA.questions, N=qs.length, letters=['A','B','C','D'];
+const $=s=>document.getElementById(s);
+let i=0, finished=false, studentCode='', pending=null, confirmed=null, sending=false;
+const evalId='Eval 05';
+const endpoint="https://script.google.com/macros/s/AKfycbwvj8J_MmpvAz9hVLLmBP7297csOellfEV8aiCSexw3wzYmqqoOUklOsop7sUpl32qLuQ/exec";
+const states=qs.map(()=>({vote:null,revealed:false,showHint:false}));
+function pad(n){return String(n).padStart(2,'0')}
+function updateScore(){ $('scoreDisplay').textContent='Réponses : '+states.filter(s=>s.vote!==null).length+'/'+N; }
+function drawDiagram(key){
+ const slot=$('diagram');slot.textContent='';slot.classList.add('show');slot.setAttribute('aria-hidden','false');
+ const ns='http://www.w3.org/2000/svg';function e(tag,att,txt){let a=document.createElementNS(ns,tag);Object.entries(att||{}).forEach(([k,v])=>a.setAttribute(k,String(v)));if(txt!==undefined)a.textContent=txt;return a}
+ const svg=e('svg',{viewBox:'0 0 680 135',role:'img','aria-label':key==='reverse'?'Boîte : traction à gauche, vitesse initiale à droite':key==='friction'?'Boîte : traction à droite et frottement à gauche':'Boîte : traction horizontale à droite, poids vertical et réaction normale verticale'});
+ const defs=e('defs');for(let [id,color] of [['arrTeal','#49e0c7'],['arrGold','#f8b65b'],['arrRose','#ff7283']]){const m=e('marker',{id,viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:6,markerHeight:6,orient:'auto-start-reverse'});m.append(e('path',{d:'M 0 0 L 10 5 L 0 10 z',fill:color}));defs.append(m)}svg.append(defs);
+ svg.append(e('line',{x1:82,y1:116,x2:610,y2:116,stroke:'#97aabe','stroke-width':3}));
+ svg.append(e('rect',{x:293,y:53,width:105,height:63,rx:4,fill:'#f9c36e',stroke:'#f0dcad','stroke-width':2}));
+ svg.append(e('text',{x:345,y:90,'text-anchor':'middle',fill:'#18344a','font-size':21,'font-weight':900},'15 kg'));
+ svg.append(e('circle',{cx:345,cy:83,r:4,fill:'#18344a'}));
+ function arrow(x1,y1,x2,y2,label,color,marker,lx,ly){svg.append(e('line',{x1,y1,x2,y2,stroke:color,'stroke-width':4,'marker-end':'url(#'+marker+')'}));svg.append(e('text',{x:lx,y:ly,'text-anchor':'middle',fill:color,'font-size':19,'font-weight':800},label));}
+ arrow(345,80,345,12,'N','#49e0c7','arrTeal',370,25);
+ arrow(345,84,345,129,'P','#f8b65b','arrGold',374,127);
+ if(key==='reverse')arrow(292,82,112,82,'F = 300 N','#ff7283','arrRose',190,70);
+ else arrow(400,82,585,82,'F = 300 N','#49e0c7','arrTeal',510,70);
+ if(key==='friction')arrow(290,97,220,97,'f = 45 N','#ff7283','arrRose',214,128);
+ svg.append(e('line',{x1:425,y1:28,x2:510,y2:28,stroke:'#f8b65b','stroke-width':3,'stroke-dasharray':'7 5','marker-end':'url(#arrGold)'}));
+ svg.append(e('text',{x:468,y:19,fill:'#f8b65b','font-size':14,'text-anchor':'middle'},'v₀ →'));
+ slot.append(svg);
+}
+function render(){finished=false;$('finish').style.display='none';$('quizStage').style.display='block';const q=qs[i],s=states[i],sec=DATA.sections[q.section];$('identityTitle').textContent=DATA.title;$('identitySmall').textContent=DATA.chapter+' • '+DATA.subject+' • '+DATA.schoolYear;$('totalChip').textContent=N+' étapes';$('roundChip').textContent='APP 01 · PARTIE '+q.section;$('sectionShort').textContent=sec[1];$('sectionName').textContent=sec[0];$('currentNum').textContent=pad(i+1);$('totalNum').textContent='/'+N;$('bar').style.width=((i+1)/N*100)+'%';$('question').textContent=q.q;drawDiagram(q.diagram);const mode=q.diagram==='reverse'?'B':q.diagram==='friction'?'C':'A';$('scenario').textContent=mode==='A'?'SITUATION A · m = 15 kg · v₀ = 5 m/s → · F = 300 N → · g = 10 m/s² · sol lisse':mode==='B'?'SITUATION B · m = 15 kg · v₀ = 5 m/s → · F = 300 N ← · sol lisse':'SITUATION C · m = 15 kg · v₀ = 5 m/s → · F = 300 N → · f = 45 N ←';const out=$('choices');out.textContent='';q.o.forEach((op,j)=>{const b=document.createElement('button');b.className='choice';b.type='button';b.setAttribute('aria-label','Réponse '+letters[j]+'. '+op);b.setAttribute('aria-pressed',String(s.vote===j));if(s.vote===j)b.classList.add('selected');if(s.revealed){if(j===q.a)b.classList.add('correct');else if(j===s.vote)b.classList.add('wrong');}b.disabled=s.revealed||!!pending||!!confirmed;const letter=document.createElement('span');letter.className='letter';letter.textContent=letters[j];const t=document.createElement('span');t.className='txt';t.textContent=op;b.append(letter,t);b.addEventListener('click',()=>vote(j));out.append(b)});$('hint').textContent='Indice : '+(q.hint||'Réfléchis aux données.');$('hint').classList.toggle('show',s.showHint&&!s.revealed);$('solution').classList.toggle('show',s.revealed);$('solution').classList.toggle('incorrect',s.revealed&&s.vote!==null&&s.vote!==q.a);$('solutionHeading').textContent=s.revealed&&s.vote!==null&&s.vote!==q.a?'⚠️ Réponse incorrecte — explication':'✓ Bonne réponse — explication';$('solutionText').textContent=s.revealed?q.solution:'';$('prevBtn').disabled=i===0;$('nextBtn').textContent=i===N-1?'Terminer →':'Suivante →';$('revealBtn').disabled=s.revealed||s.vote===null;$('hintBtn').disabled=s.revealed||!q.hint;updateScore();}
+function saveProgress(){
+ try{localStorage.setItem('s2s-eval05-'+studentCode,JSON.stringify({i,votes:states.map(s=>s.vote),revealed:states.map(s=>s.revealed),pending,confirmed}));}catch(e){}
+}
+async function request(data){
+ const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(data),signal:AbortSignal.timeout(30000)});
+ const result=await response.json();
+ if(!response.ok||!result.ok)throw Error(result.error||'Le service n’a pas confirmé la demande.');
+ return result;
+}
+$('access').onsubmit=async event=>{
+ event.preventDefault();
+ const button=event.target.querySelector('button');button.disabled=true;
+ const code=$('studentCode').value.trim().toLowerCase();
+ $('receipt').textContent='Vérification du code…';
+ try{
+  await request({action:'login',code,evalId});
+  studentCode=code;
+  try{
+   const saved=JSON.parse(localStorage.getItem('s2s-eval05-'+code));
+   if(saved?.votes?.length===N){
+    saved.votes.forEach((v,j)=>{states[j].vote=Number.isInteger(v)&&v>=0&&v<4?v:null;states[j].revealed=states[j].vote!==null&&saved.revealed?.[j]===true;});
+    i=Number.isInteger(saved.i)?Math.min(N-1,Math.max(0,saved.i)):0;
+    if(states.every(s=>s.vote!==null)){
+      if(saved.pending?.action==='submit'&&saved.pending.evalId===evalId&&saved.pending.code===code&&saved.pending.answers?.length===N)pending=saved.pending;
+      if(Number.isInteger(saved.confirmed?.score)&&saved.confirmed.maximum===N)confirmed=saved.confirmed;
+    }
+   }
+  }catch(e){}
+  $('access').hidden=true;$('activity').hidden=false;
+  $('receipt').textContent='Code validé. Répondez aux '+N+' questions puis remettez vos réponses.';
+  if(pending||confirmed)finish();else render();
+ }catch(e){$('receipt').textContent='Accès non confirmé. '+(e.message||'Réessayez après avoir vérifié votre connexion.');}
+ finally{button.disabled=false;}
+};
+function vote(j){if(!studentCode||finished||pending||confirmed||states[i].revealed)return;states[i].vote=j;saveProgress();render();}
+function reveal(){if(!studentCode||finished||states[i].revealed||states[i].vote===null)return;states[i].revealed=true;saveProgress();render();}
+function move(delta){
+ if(!studentCode||finished)return;
+ if(delta===1&&i===N-1){finish();return;}
+ i=Math.max(0,Math.min(N-1,i+delta));saveProgress();render();
+}
+function finish(){
+ const first=states.findIndex(s=>s.vote===null);
+ if(first!==-1){i=first;saveProgress();render();$('receipt').textContent='Complétez les questions restantes avant de remettre vos réponses.';return;}
+ finished=true;$('quizStage').style.display='none';$('finish').style.display='block';$('bar').style.width='100%';
+ $('finalScore').textContent=confirmed?confirmed.score+' / '+confirmed.maximum:N+' / '+N+' réponses';
+ $('finalText').textContent=confirmed?'Vos réponses ont été enregistrées.':'Cliquez sur « Remettre mes réponses » pour les enregistrer.';
+ $('send').disabled=!!confirmed||sending;
+ $('send').textContent=pending&&!confirmed?'Réessayer la même remise':'Remettre mes réponses';
+ if(confirmed)$('receipt').textContent='Remise enregistrée'+(confirmed.receipt?' · reçu '+confirmed.receipt:'')+'.';
+}
+$('send').onclick=async()=>{
+ if(!studentCode||!finished||sending||confirmed||states.some(s=>s.vote===null))return;
+ sending=true;$('send').disabled=true;$('reviewBtn').disabled=true;
+ $('receipt').textContent='Enregistrement en cours…';
+ try{
+  if(!pending){pending={action:'submit',evalId,code:studentCode,submissionId:crypto.randomUUID(),answers:states.map(s=>s.vote)};saveProgress();}
+  const result=await request(pending);
+  if(!Number.isInteger(result.score)||result.maximum!==N)throw Error('Reçu inattendu.');
+  confirmed={score:result.score,maximum:result.maximum,receipt:result.receipt};saveProgress();finish();
+ }catch(e){$('receipt').textContent='Remise non confirmée. Réessayez sans fermer la fiche.';$('send').textContent='Réessayer la même remise';}
+ finally{sending=false;$('send').disabled=!!confirmed;$('reviewBtn').disabled=false;}
+};
+function toggleFull(){if(document.fullscreenElement)document.exitFullscreen();else if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{});}
+$('prevBtn').onclick=()=>move(-1);$('nextBtn').onclick=()=>move(1);
+$('hintBtn').onclick=()=>{if(!states[i].revealed){states[i].showHint=!states[i].showHint;render()}};
+$('revealBtn').onclick=reveal;$('fullBtn').onclick=toggleFull;
+$('reviewBtn').onclick=()=>{if(!sending){i=0;saveProgress();render();}};
+document.addEventListener('keydown',e=>{
+ if(!studentCode||finished||e.altKey||e.ctrlKey||e.metaKey||e.target?.closest?.('input,textarea,select,button,a,[contenteditable]'))return;
+ const key=e.key.toLowerCase();
+ if(/^[a-d1-4]$/.test(key))vote(/[1-4]/.test(key)?Number(key)-1:'abcd'.indexOf(key));
+ else if(e.code==='Space'){e.preventDefault();reveal();}
+ else if(key==='arrowright'){e.preventDefault();move(1);}
+ else if(key==='arrowleft'){e.preventDefault();move(-1);}
+ else if(key==='f')toggleFull();
+});
+$('credit').textContent=DATA.author;
+</script></body></html>
