@@ -50,8 +50,8 @@ function drawDiagram(key){
  svg.append(e('text',{x:345,y:90,'text-anchor':'middle',fill:'#18344a','font-size':21,'font-weight':900},'15 kg'));
  svg.append(e('circle',{cx:345,cy:83,r:4,fill:'#18344a'}));
  function arrow(x1,y1,x2,y2,label,color,marker,lx,ly){svg.append(e('line',{x1,y1,x2,y2,stroke:color,'stroke-width':4,'marker-end':'url(#'+marker+')'}));svg.append(e('text',{x:lx,y:ly,'text-anchor':'middle',fill:color,'font-size':19,'font-weight':800},label));}
- arrow(345,80,345,12,'N','#49e0c7','arrTeal',370,25);
- arrow(345,84,345,129,'P','#f8b65b','arrGold',374,127);
+ arrow(345,83,345,37,'N','#49e0c7','arrTeal',370,38);
+ arrow(345,83,345,129,'P','#f8b65b','arrGold',374,127);
  if(key==='reverse')arrow(292,82,112,82,'F = 300 N','#ff7283','arrRose',190,70);
  else arrow(400,82,585,82,'F = 300 N','#49e0c7','arrTeal',510,70);
  if(key==='friction')arrow(290,97,220,97,'f = 45 N','#ff7283','arrRose',214,128);
