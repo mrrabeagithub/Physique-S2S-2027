@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Explorateur de projection vectorielle — v1.4</title>
+ <!-- Tailwind CSS pour la mise en page -->
+ <script src="https://cdn.tailwindcss.com"></script>
+ <style>
+ @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&family=Inter:wght@400;600&display=swap');
+ 
+body {
+ background-color: #1a1a1a;
+ color: #e5e5e5;
+ font-family: 'Inter', sans-serif;
+ overflow: hidden;
+ touch-action: none;
+ }
+
+ canvas {
+ background-color: #262626;
+ border-radius: 8px;
+ box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+ cursor: crosshair;
+ display: block;
+ width: 100%;
+ height: 100%;
+ }
+
+ .math-font {
+ font-family: 'Fira Code', monospace;
+ }
+
+ ::-webkit-scrollbar {
+ width: 8px;
+ }
+ ::-webkit-scrollbar-track {
+ background: #262626; 
+}
+ ::-webkit-scrollbar-thumb {
+ background: #404040; 
+border-radius: 4px;
+ }
+ ::-webkit-scrollbar-thumb:hover {
+ background: #525252; 
+}
+
+ .btn-preset {
+ transition: all 0.2s;
+ border: 1px solid #404040;
+ }
+ .btn-preset:hover {
+ transform: translateY(-1px);
+ border-color: #10b981;
+ background-color: #333;
+ }
+ .btn-preset:active {
+ transform: translateY(1px);
+ }
+ </style>
+</head>
+<body class="h-screen flex flex-col md:flex-row p-4 gap-4">
+
+ <!-- Panneau de contrôle -->
+ <div class="w-full md:w-1/3 flex flex-col gap-4 order-2 md:order-1 h-full overflow-y-auto pr-2">
+ <div class="bg-neutral-800 p-6 rounded-lg border border-neutral-700">
+ <h1 class="text-2xl font-bold mb-2 text-emerald-400">Projection vectorielle</h1>
+ <p class="text-neutral-400 text-sm mb-4">
+ Numérisation interactive (par Rabih A.G.) 
+<span class="text-xs text-emerald-400 ml-1 border border-emerald-700 px-1 rounded">v1.4</span>
+ </p>
+ 
+<!-- Affichage dynamique des données -->
+ <div class="space-y-2.5 math-font bg-neutral-900 p-4 rounded border border-neutral-700">
+ <div class="flex justify-between">
+ <span class="text-neutral-400">|V| (Norme) :</span>
+ <span class="text-emerald-400 font-bold" id="val-mag">100</span>
+ </div>
+ <div class="flex justify-between">
+ <span class="text-neutral-400" id="label-angle">α (Angle) :</span>
+ <span class="text-yellow-400 font-bold" id="val-angle">45°</span>
+ </div>
+ <div class="flex justify-between">
+ <span class="text-neutral-400" id="label-cos">cos(α) :</span>
+ <span class="text-blue-400 font-bold" id="val-cos">0.707</span>
+ </div>
+ <div class="h-px bg-neutral-700 my-2"></div>
+ <div class="flex justify-between items-center">
+ <span class="text-white" id="label-proj-x">Projection (v<sub>x</sub>) :</span>
+ <span class="text-2xl font-bold text-white" id="val-proj">70.7</span>
+ </div>
+ <div class="text-xs text-center text-neutral-500" id="val-formula">
+ Projection = |V| · cos(α)
+ </div>
+ <!-- Ligne dynamique pour v_y (masquée si désactivée) -->
+ <div id="vy-row" class="hidden pt-2 mt-2 border-t border-neutral-800 space-y-1">
+ <div class="flex justify-between items-center">
+ <span class="text-sky-300" id="label-proj-y">Composante (v<sub>y</sub>) :</span>
+ <span class="text-xl font-bold text-sky-400" id="val-proj-y">0.0</span>
+ </div>
+ <div class="text-xs text-center text-neutral-500" id="val-formula-y">
+ v<sub>y</sub> = |V| · sin(α)
+ </div>
+ </div>
+ </div>
+
+ <!-- Options d'axes et composante v_y (Amélioration 3) -->
+ <div class="mt-4 bg-neutral-900 p-4 rounded border border-neutral-700 space-y-3">
+ <label class="flex items-center justify-between cursor-pointer select-none">
+ <span class="text-sm font-medium text-sky-300">Afficher la composante v<sub>y</sub> (⊥)</span>
+ <input type="checkbox" id="toggle-vy" class="w-4 h-4 accent-sky-400 cursor-pointer">
+ </label>
+
+ <div class="pt-2 border-t border-neutral-800">
+ <div class="flex justify-between items-center text-sm mb-1.5">
+ <span class="text-neutral-300">Inclinaison de l'axe (θ) :</span>
+ <div class="flex items-center gap-2">
+ <span class="math-font text-cyan-400 font-bold" id="val-tilt">0°</span>
+ <button id="btn-reset-tilt" type="button" class="text-xs px-2 py-0.5 rounded bg-neutral-800 hover:bg-neutral-700 border border-neutral-600 text-neutral-300">
+ 0°
+ </button>
+ </div>
+ </div>
+ <input type="range" id="slider-tilt" min="-60" max="60" step="1" value="0" class="w-full accent-cyan-400 cursor-pointer">
+ </div>
+ </div>
+ </div>
+
+ <!-- Scénarios prédéfinis -->
+ <div class="bg-neutral-800 p-6 rounded-lg border border-neutral-700 flex-grow">
+ <h2 class="text-lg font-semibold mb-4 text-white border-b border-neutral-700 pb-2">Scénarios</h2>
+ <div class="grid grid-cols-1 gap-3">
+ <button onclick="setScenario('acute')" class="btn-preset bg-neutral-700 p-3 rounded text-left">
+ <div class="font-bold text-emerald-400">1. Angle aigu</div>
+ <div class="text-xs text-neutral-400">Projection > 0 (V · cos α)</div>
+ </button>
+ <button onclick="setScenario('obtuse')" class="btn-preset bg-neutral-700 p-3 rounded text-left">
+ <div class="font-bold text-red-400">2. Angle obtus</div>
+ <div class="text-xs text-neutral-400">Projection < 0 (-V · cos β)</div>
+ </button>
+ <button onclick="setScenario('parallel_pos')" class="btn-preset bg-neutral-700 p-3 rounded text-left">
+ <div class="font-bold text-emerald-400">3. Parallèle (+)</div>
+ <div class="text-xs text-neutral-400">Max positif (Projection = V)</div>
+ </button>
+ <button onclick="setScenario('parallel_neg')" class="btn-preset bg-neutral-700 p-3 rounded text-left">
+ <div class="font-bold text-red-400">4. Antiparallèle (-)</div>
+ <div class="text-xs text-neutral-400">Max négatif (Projection = -V)</div>
+ </button>
+ <button onclick="setScenario('perpendicular')" class="btn-preset bg-neutral-700 p-3 rounded text-left">
+ <div class="font-bold text-yellow-400">5. Perpendiculaire</div>
+ <div class="text-xs text-neutral-400">Nulle (Projection = 0)</div>
+ </button>
+ </div>
+ 
+<div class="mt-6 text-xs text-neutral-500 italic">
+ * Faites glisser la flèche du vecteur sur la zone de dessin pour explorer manuellement.
+ </div>
+ </div>
+ </div>
+
+ <!-- Conteneur du canevas -->
+ <div class="w-full md:w-2/3 h-full order-1 md:order-2 flex flex-col">
+ <div class="relative w-full h-full bg-neutral-800 rounded-lg border border-neutral-700 overflow-hidden" id="canvas-container">
+ <canvas id="simCanvas"></canvas>
+ <!-- Indications superposées -->
+ <div class="absolute top-4 left-4 text-neutral-500 text-sm pointer-events-none select-none" id="overlay-axis-label">
+ axe x
+ </div>
+ </div>
+ </div>
+
+<script>
+/**
+ * Simulation de physique : Projection vectorielle (v1.4)
+ * Inclut : HiDPI, limites bornées, composante perpendiculaire v_y et inclinaison d'axe θ.
+ */
+
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+const container = document.getElementById('canvas-container');
+
+// Éléments de l'interface
+const uiMag = document.getElementById('val-mag');
+const uiLabelAngle = document.getElementById('label-angle');
+const uiValAngle = document.getElementById('val-angle');
+const uiLabelCos = document.getElementById('label-cos');
+const uiValCos = document.getElementById('val-cos');
+const uiLabelProjX = document.getElementById('label-proj-x');
+const uiProj = document.getElementById('val-proj');
+const uiFormula = document.getElementById('val-formula');
+
+const toggleVy = document.getElementById('toggle-vy');
+const vyRow = document.getElementById('vy-row');
+const uiLabelProjY = document.getElementById('label-proj-y');
+const uiProjY = document.getElementById('val-proj-y');
+const uiFormulaY = document.getElementById('val-formula-y');
+
+const sliderTilt = document.getElementById('slider-tilt');
+const uiTilt = document.getElementById('val-tilt');
+const btnResetTilt = document.getElementById('btn-reset-tilt');
+const overlayAxisLabel = document.getElementById('overlay-axis-label');
+
+// État
+let width, height, centerX, centerY, dpr = 1;
+let isDragging = false;
+let showVy = false;
+let axisTiltDeg = 0; // Inclinaison de l'axe en degrés physiques (+ = sens antihoraire)
+const CANVAS_PADDING = 24;
+
+// Propriétés du vecteur (angle absolu dans le repère canvas)
+const vectorState = {
+ mag: 200,
+ angle: -Math.PI / 6,
+ originX: 0,
+ originY: 0
+};
+
+// Couleurs
+const COLORS = {
+ bg: '#262626',
+ axis: '#06b6d4', // Cyan-500
+ axisPerp: '#38bdf8', // Sky-400
+ vector: '#10b981', // Emerald-500
+ vectorNeg: '#ef4444', // Red-500
+ proj: '#a3e635', // Lime-400
+ projY: '#38bdf8', // Sky-400
+ text: '#e5e5e5',
+ angleArc: '#facc15', // Yellow-400
+ tiltArc: '#22d3ee', // Cyan-400
+ dashed: '#737373'
+};
+
+function getAxisCanvasAngle() {
+ // Dans Canvas, Y est vers le bas, donc un angle physique positif θ correspond à -θ en radians canvas
+ return -axisTiltDeg * (Math.PI / 180);
+}
+
+function normalizeRad(rad) {
+ let a = rad;
+ while (a > Math.PI) a -= 2 * Math.PI;
+ while (a <= -Math.PI) a += 2 * Math.PI;
+ return a;
+}
+
+function clampHeadToBounds() {
+ if (!width || !height) return;
+ const headX = vectorState.originX + Math.cos(vectorState.angle) * vectorState.mag;
+ const headY = vectorState.originY + Math.sin(vectorState.angle) * vectorState.mag;
+ const clampedX = Math.max(CANVAS_PADDING, Math.min(width - CANVAS_PADDING, headX));
+ const clampedY = Math.max(CANVAS_PADDING, Math.min(height - CANVAS_PADDING, headY));
+
+ if (clampedX !== headX || clampedY !== headY) {
+ const dx = clampedX - vectorState.originX;
+ const dy = clampedY - vectorState.originY;
+ vectorState.angle = Math.atan2(dy, dx);
+ vectorState.mag = Math.max(20, Math.hypot(dx, dy));
+ }
+}
+
+function resize() {
+ const rect = container.getBoundingClientRect();
+ dpr = window.devicePixelRatio || 1;
+ width = rect.width;
+ height = rect.height;
+
+ canvas.width = Math.max(1, Math.floor(width * dpr));
+ canvas.height = Math.max(1, Math.floor(height * dpr));
+ ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+ centerX = width / 2;
+ centerY = height / 2;
+ 
+ vectorState.originX = Math.max(CANVAS_PADDING + 20, centerX - Math.min(100, width * 0.15));
+ vectorState.originY = centerY;
+
+ clampHeadToBounds();
+ draw();
+}
+
+window.addEventListener('resize', resize);
+setTimeout(resize, 0);
+
+// Contrôles v_y et inclinaison
+toggleVy.addEventListener('change', () => {
+ showVy = toggleVy.checked;
+ vyRow.classList.toggle('hidden', !showVy);
+ draw();
+});
+
+sliderTilt.addEventListener('input', () => {
+ axisTiltDeg = parseFloat(sliderTilt.value) || 0;
+ uiTilt.innerText = axisTiltDeg + '°';
+ overlayAxisLabel.innerText = axisTiltDeg === 0 ? 'axe x' : "axe x' (θ = " + axisTiltDeg + "°)";
+ draw();
+});
+
+btnResetTilt.addEventListener('click', () => {
+ axisTiltDeg = 0;
+ sliderTilt.value = '0';
+ uiTilt.innerText = '0°';
+ overlayAxisLabel.innerText = 'axe x';
+ draw();
+});
+
+// Interaction souris / tactile
+canvas.addEventListener('mousedown', startDrag);
+canvas.addEventListener('mousemove', drag);
+window.addEventListener('mouseup', endDrag);
+
+canvas.addEventListener('touchstart', (e) => startDrag(e.touches[0]));
+canvas.addEventListener('touchmove', (e) => {
+ e.preventDefault();
+ drag(e.touches[0]);
+}, { passive: false });
+window.addEventListener('touchend', endDrag);
+
+function startDrag(e) {
+ const rect = canvas.getBoundingClientRect();
+ const mx = e.clientX - rect.left;
+ const my = e.clientY - rect.top;
+ 
+ const headX = vectorState.originX + Math.cos(vectorState.angle) * vectorState.mag;
+ const headY = vectorState.originY + Math.sin(vectorState.angle) * vectorState.mag;
+ 
+ const dist = Math.hypot(mx - headX, my - headY);
+ if (dist < 40) {
+ isDragging = true;
+ canvas.style.cursor = 'grabbing';
+ }
+}
+
+function drag(e) {
+ if (!isDragging) return;
+ 
+ const rect = canvas.getBoundingClientRect();
+ const rawX = e.clientX - rect.left;
+ const rawY = e.clientY - rect.top;
+
+ const mx = Math.max(CANVAS_PADDING, Math.min(width - CANVAS_PADDING, rawX));
+ const my = Math.max(CANVAS_PADDING, Math.min(height - CANVAS_PADDING, rawY));
+ 
+ const dx = mx - vectorState.originX;
+ const dy = my - vectorState.originY;
+ 
+ vectorState.angle = Math.atan2(dy, dx);
+ vectorState.mag = Math.max(20, Math.hypot(dx, dy));
+ 
+ draw();
+}
+
+function endDrag() {
+ isDragging = false;
+ canvas.style.cursor = 'crosshair';
+}
+
+// --- Scénarios ---
+
+window.setScenario = function(type) {
+ vectorState.mag = 200;
+ const axisAngle = getAxisCanvasAngle();
+
+ switch(type) {
+ case 'acute':
+ vectorState.angle = axisAngle - Math.PI / 6;
+ break;
+ case 'obtuse':
+ vectorState.angle = axisAngle - Math.PI * 0.8;
+ break;
+ case 'parallel_pos':
+ vectorState.angle = axisAngle;
+ break;
+ case 'parallel_neg':
+ vectorState.angle = axisAngle + Math.PI;
+ break;
+ case 'perpendicular':
+ vectorState.angle = axisAngle - Math.PI / 2;
+ break;
+ }
+
+ clampHeadToBounds();
+ draw();
+}
+
+// --- Logique de dessin & placement anti-chevauchement ---
+
+let placedLabelBoxes = [];
+
+function localToWorld(lx, ly, originX, originY, rot) {
+ const c = Math.cos(rot);
+ const sn = Math.sin(rot);
+ return {
+ x: originX + lx * c - ly * sn,
+ y: originY + lx * sn + ly * c
+ };
+}
+
+function boxesOverlap(a, b, pad = 4) {
+ return !(a.x2 + pad < b.x1 || a.x1 - pad > b.x2 || a.y2 + pad < b.y1 || a.y1 - pad > b.y2);
+}
+
+function placeWorldLabel(text, candidates, color, font) {
+ ctx.font = font;
+ const metrics = ctx.measureText(text);
+ const textW = metrics.width;
+ const fontSize = parseInt(font, 10) || 14;
+ const boxW = textW + 10;
+ const boxH = fontSize + 6;
+
+ let chosen = candidates[0];
+ let bestOverlapCount = Infinity;
+
+ for (const cand of candidates) {
+ const cx = Math.max(boxW / 2 + 6, Math.min(width - boxW / 2 - 6, cand.x));
+ const cy = Math.max(boxH / 2 + 6, Math.min(height - boxH / 2 - 6, cand.y));
+ const box = { x1: cx - boxW / 2, y1: cy - boxH / 2, x2: cx + boxW / 2, y2: cy + boxH / 2 };
+
+ let overlaps = 0;
+ for (const existing of placedLabelBoxes) {
+ if (boxesOverlap(box, existing)) overlaps++;
+ }
+ if (overlaps === 0) {
+ chosen = { x: cx, y: cy, box };
+ break;
+ }
+ if (overlaps < bestOverlapCount) {
+ bestOverlapCount = overlaps;
+ chosen = { x: cx, y: cy, box };
+ }
+ }
+
+ if (!chosen.box) {
+ const cx = Math.max(boxW / 2 + 6, Math.min(width - boxW / 2 - 6, chosen.x));
+ const cy = Math.max(boxH / 2 + 6, Math.min(height - boxH / 2 - 6, chosen.y));
+ chosen = {
+ x: cx,
+ y: cy,
+ box: { x1: cx - boxW / 2, y1: cy - boxH / 2, x2: cx + boxW / 2, y2: cy + boxH / 2 }
+ };
+ }
+
+ placedLabelBoxes.push(chosen.box);
+
+ ctx.save();
+ ctx.fillStyle = 'rgba(38, 38, 38, 0.88)';
+ const r = 4;
+ const bx = chosen.box.x1;
+ const by = chosen.box.y1;
+ const bw = chosen.box.x2 - chosen.box.x1;
+ const bh = chosen.box.y2 - chosen.box.y1;
+ ctx.beginPath();
+ ctx.roundRect(bx, by, bw, bh, r);
+ ctx.fill();
+
+ ctx.fillStyle = color;
+ ctx.font = font;
+ ctx.textAlign = 'center';
+ ctx.textBaseline = 'middle';
+ ctx.fillText(text, chosen.x, chosen.y);
+ ctx.restore();
+}
+
+function draw() {
+ ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+ placedLabelBoxes = [];
+
+ // 1. Effacer
+ ctx.fillStyle = COLORS.bg;
+ ctx.fillRect(0, 0, width, height);
+ 
+ const { originX, originY, mag, angle } = vectorState;
+ const axisAngle = getAxisCanvasAngle();
+ const relAngle = normalizeRad(angle - axisAngle);
+
+ const projLen = Math.cos(relAngle) * mag;
+ const perpCanvasY = Math.sin(relAngle) * mag;
+ const perpPhysLen = -perpCanvasY;
+
+ updateUI(relAngle, mag, projLen, perpPhysLen);
+
+ // Référence horizontale et arc d'inclinaison θ si l'axe est incliné
+ const queuedLabels = [];
+ if (axisTiltDeg !== 0) {
+ ctx.save();
+ ctx.setLineDash([4, 4]);
+ ctx.strokeStyle = '#525252';
+ ctx.lineWidth = 1;
+ ctx.beginPath();
+ ctx.moveTo(originX, originY);
+ ctx.lineTo(originX + 125, originY);
+ ctx.stroke();
+ ctx.setLineDash([]);
+
+ // Arc θ placé à un rayon distinct (76px) pour ne pas toucher α/β (38px)
+ ctx.beginPath();
+ ctx.strokeStyle = COLORS.tiltArc;
+ ctx.lineWidth = 1.5;
+ ctx.arc(originX, originY, 76, 0, axisAngle, axisAngle < 0);
+ ctx.stroke();
+
+ const midTilt = axisAngle / 2;
+ queuedLabels.push({
+ text: 'θ=' + axisTiltDeg + '°',
+ color: COLORS.tiltArc,
+ font: '12px Fira Code',
+ candidates: [
+ { x: originX + Math.cos(midTilt) * 98, y: originY + Math.sin(midTilt) * 98 },
+ { x: originX + Math.cos(midTilt) * 116, y: originY + Math.sin(midTilt) * 116 },
+ { x: originX + Math.cos(midTilt - 0.25) * 98, y: originY + Math.sin(midTilt - 0.25) * 98 }
+ ]
+ });
+ ctx.restore();
+ }
+
+ // Dessiner dans le repère tourné de l'axe
+ ctx.save();
+ ctx.translate(originX, originY);
+ ctx.rotate(axisAngle);
+
+ const span = Math.max(width, height) * 1.5;
+
+ // 2. Axe principal
+ ctx.beginPath();
+ ctx.strokeStyle = COLORS.axis;
+ ctx.lineWidth = 2;
+ ctx.moveTo(-span, 0);
+ ctx.lineTo(span, 0);
+ ctx.stroke();
+
+ const axisTipDist = Math.min(width * 0.43, span - 30);
+ drawArrowHead(axisTipDist, 0, 0, COLORS.axis);
+ queuedLabels.push({
+ text: axisTiltDeg === 0 ? 'axe' : "axe x'",
+ color: COLORS.axis,
+ font: '14px Inter',
+ candidates: [
+ localToWorld(axisTipDist - 22, 18, originX, originY, axisAngle),
+ localToWorld(axisTipDist - 22, -18, originX, originY, axisAngle)
+ ]
+ });
+
+ // Axe perpendiculaire (si v_y activé)
+ if (showVy) {
+ ctx.beginPath();
+ ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+ ctx.lineWidth = 1.5;
+ ctx.moveTo(0, -span);
+ ctx.lineTo(0, span);
+ ctx.stroke();
+
+ const yTipDist = Math.min(height * 0.4, 180);
+ drawArrowHead(0, -yTipDist, -Math.PI / 2, 'rgba(56, 189, 248, 0.65)');
+ queuedLabels.push({
+ text: axisTiltDeg === 0 ? 'y' : "y'",
+ color: COLORS.axisPerp,
+ font: '14px Inter',
+ candidates: [
+ localToWorld(18, -yTipDist + 10, originX, originY, axisAngle),
+ localToWorld(-18, -yTipDist + 10, originX, originY, axisAngle)
+ ]
+ });
+ }
+
+ // 3. Vecteur projection v_x (accolade placée du côté opposé au vecteur V)
+ ctx.beginPath();
+ ctx.strokeStyle = (projLen >= 0) ? COLORS.proj : COLORS.vectorNeg;
+ ctx.lineWidth = 4;
+ ctx.moveTo(0, 0);
+ ctx.lineTo(projLen, 0);
+ ctx.stroke();
+
+ const braceDir = perpCanvasY <= 0 ? 1 : -1;
+ drawBrace(0, 10 * braceDir, projLen, 10 * braceDir, (projLen >= 0) ? COLORS.proj : COLORS.vectorNeg, braceDir);
+ if (Math.abs(projLen) >= 18) {
+ queuedLabels.push({
+ text: Math.abs((projLen / mag) * 100).toFixed(0) + '% V',
+ color: (projLen >= 0) ? COLORS.proj : COLORS.vectorNeg,
+ font: 'bold 14px Fira Code',
+ candidates: [
+ localToWorld(projLen / 2, 36 * braceDir, originX, originY, axisAngle),
+ localToWorld(projLen / 2, 52 * braceDir, originX, originY, axisAngle),
+ localToWorld(projLen / 2, -32 * braceDir, originX, originY, axisAngle)
+ ]
+ });
+ }
+
+ // Composante v_y le long de l'axe perpendiculaire (libellé du côté opposé à V)
+ if (showVy) {
+ ctx.beginPath();
+ ctx.strokeStyle = COLORS.projY;
+ ctx.lineWidth = 4;
+ ctx.moveTo(0, 0);
+ ctx.lineTo(0, perpCanvasY);
+ ctx.stroke();
+
+ ctx.beginPath();
+ ctx.setLineDash([5, 5]);
+ ctx.strokeStyle = COLORS.dashed;
+ ctx.lineWidth = 1;
+ ctx.moveTo(projLen, perpCanvasY);
+ ctx.lineTo(0, perpCanvasY);
+ ctx.stroke();
+ ctx.setLineDash([]);
+
+ if (Math.abs(perpCanvasY) >= 18) {
+ const vySide = projLen >= 0 ? -1 : 1;
+ queuedLabels.push({
+ text: Math.abs((perpPhysLen / mag) * 100).toFixed(0) + '% V',
+ color: COLORS.projY,
+ font: 'bold 13px Fira Code',
+ candidates: [
+ localToWorld(34 * vySide, perpCanvasY / 2, originX, originY, axisAngle),
+ localToWorld(48 * vySide, perpCanvasY / 2, originX, originY, axisAngle),
+ localToWorld(-34 * vySide, perpCanvasY / 2, originX, originY, axisAngle)
+ ]
+ });
+ }
+ }
+
+ // 4. Ligne pointillée de projection sur l'axe principal
+ ctx.beginPath();
+ ctx.setLineDash([5, 5]);
+ ctx.strokeStyle = COLORS.dashed;
+ ctx.lineWidth = 1;
+ ctx.moveTo(projLen, perpCanvasY);
+ ctx.lineTo(projLen, 0);
+ ctx.stroke();
+ ctx.setLineDash([]);
+
+ // 5. Vecteur principal V
+ drawVector(0, 0, projLen, perpCanvasY, COLORS.vector);
+ const vecAngle = Math.atan2(perpCanvasY, projLen);
+ const vecNormalSide = perpCanvasY <= 0 ? -1 : 1;
+ queuedLabels.push({
+ text: 'V',
+ color: COLORS.vector,
+ font: 'bold 17px Inter',
+ candidates: [
+ localToWorld(projLen * 0.55 - Math.sin(vecAngle) * 20 * vecNormalSide, perpCanvasY * 0.55 + Math.cos(vecAngle) * 20 * vecNormalSide, originX, originY, axisAngle),
+ localToWorld(projLen * 0.55 + Math.sin(vecAngle) * 20 * vecNormalSide, perpCanvasY * 0.55 - Math.cos(vecAngle) * 20 * vecNormalSide, originX, originY, axisAngle),
+ localToWorld(projLen * 0.78 - Math.sin(vecAngle) * 22 * vecNormalSide, perpCanvasY * 0.78 + Math.cos(vecAngle) * 22 * vecNormalSide, originX, originY, axisAngle)
+ ]
+ });
+
+ // 6. Arc d'angle α ou β
+ const angleLabelInfo = drawAngle(0, 0, relAngle);
+ if (angleLabelInfo) {
+ queuedLabels.push({
+ text: angleLabelInfo.label,
+ color: COLORS.angleArc,
+ font: '14px Fira Code',
+ candidates: [
+ localToWorld(angleLabelInfo.tx, angleLabelInfo.ty, originX, originY, axisAngle),
+ localToWorld(angleLabelInfo.txAlt, angleLabelInfo.tyAlt, originX, originY, axisAngle)
+ ]
+ });
+ }
+
+ // 7. Symbole d'angle droit
+ if (Math.abs(projLen) > 5 && Math.abs(perpCanvasY) > 5) {
+ drawRightAngleBox(projLen, 0, perpCanvasY < 0 ? -1 : 1);
+ }
+
+ ctx.restore();
+
+ // Dessiner tous les libellés en coordonnées écran avec évitement de collisions
+ for (const item of queuedLabels) {
+ placeWorldLabel(item.text, item.candidates, item.color, item.font);
+ }
+}
+
+function drawVector(x1, y1, x2, y2, color) {
+ ctx.beginPath();
+ ctx.strokeStyle = color;
+ ctx.lineWidth = 3;
+ ctx.moveTo(x1, y1);
+ ctx.lineTo(x2, y2);
+ ctx.stroke();
+ 
+ const angle = Math.atan2(y2 - y1, x2 - x1);
+ drawArrowHead(x2, y2, angle, color);
+}
+
+function drawArrowHead(x, y, angle, color) {
+ const size = 10;
+ ctx.save();
+ ctx.translate(x, y);
+ ctx.rotate(angle);
+ ctx.beginPath();
+ ctx.moveTo(0, 0);
+ ctx.lineTo(-size, -size/2);
+ ctx.lineTo(-size, size/2);
+ ctx.closePath();
+ ctx.fillStyle = color;
+ ctx.fill();
+ ctx.restore();
+}
+
+function drawAngle(x, y, angle) {
+ const radius = 38;
+ ctx.beginPath();
+ ctx.strokeStyle = COLORS.angleArc;
+ ctx.lineWidth = 2;
+ 
+ const isObtuse = Math.cos(angle) < -0.001;
+
+ if (isObtuse) {
+ if (angle > 0) {
+ ctx.arc(x, y, radius, angle, Math.PI, false);
+ } else {
+ ctx.arc(x, y, radius, -Math.PI, angle, false);
+ }
+ ctx.stroke();
+ 
+ const refAngle = (angle > 0) ? Math.PI : -Math.PI;
+ const midAngle = (angle + refAngle) / 2;
+ return {
+ label: 'β',
+ tx: x + Math.cos(midAngle) * (radius + 16),
+ ty: y + Math.sin(midAngle) * (radius + 16),
+ txAlt: x + Math.cos(midAngle) * (radius + 28),
+ tyAlt: y + Math.sin(midAngle) * (radius + 28)
+ };
+ } else {
+ ctx.arc(x, y, radius, 0, angle, angle < 0); 
+ ctx.stroke();
+ 
+ const midAngle = angle / 2;
+ return {
+ label: 'α',
+ tx: x + Math.cos(midAngle) * (radius + 16),
+ ty: y + Math.sin(midAngle) * (radius + 16),
+ txAlt: x + Math.cos(midAngle) * (radius + 28),
+ tyAlt: y + Math.sin(midAngle) * (radius + 28)
+ };
+ }
+}
+
+function drawRightAngleBox(x, y, dirY) {
+ const size = 10;
+ ctx.beginPath();
+ ctx.strokeStyle = COLORS.dashed;
+ ctx.lineWidth = 1;
+ ctx.moveTo(x, y - size * dirY);
+ ctx.lineTo(x - size * Math.sign(x), y - size * dirY);
+ ctx.lineTo(x - size * Math.sign(x), y);
+ ctx.stroke();
+}
+
+function drawBrace(x1, y1, x2, y2, color, dir = 1) {
+ if (Math.abs(x2 - x1) < 12) return;
+
+ ctx.beginPath();
+ ctx.strokeStyle = color;
+ ctx.lineWidth = 2;
+ 
+ const w = x2 - x1;
+ const h = 10 * dir;
+ const tip = 5 * dir;
+ 
+ ctx.moveTo(x1, y1);
+ ctx.quadraticCurveTo(x1, y1 + h, x1 + w/4, y1 + h);
+ ctx.lineTo(x1 + w/2 - 5, y1 + h);
+ ctx.lineTo(x1 + w/2, y1 + h + tip);
+ ctx.lineTo(x1 + w/2 + 5, y1 + h);
+ ctx.lineTo(x1 + 3*w/4, y1 + h);
+ ctx.quadraticCurveTo(x2, y1 + h, x2, y2);
+ 
+ ctx.stroke();
+}
+
+function updateUI(relRad, mag, projX, projY) {
+ let deg = -relRad * (180 / Math.PI);
+ while (deg > 180) deg -= 360;
+ while (deg <= -180) deg += 360;
+ 
+ uiMag.innerText = mag.toFixed(0);
+ uiLabelProjX.innerHTML = axisTiltDeg === 0 ? 'Projection (v<sub>x</sub>) :' : "Projection (v<sub>x'</sub>) :";
+ uiLabelProjY.innerHTML = axisTiltDeg === 0 ? 'Composante (v<sub>y</sub>) :' : "Composante (v<sub>y'</sub>) :";
+
+ const isObtuse = Math.abs(deg) > 90.01;
+
+ if (isObtuse) {
+ const beta = 180 - Math.abs(deg);
+ uiLabelAngle.innerText = 'β (Suppl.) :';
+ uiValAngle.innerText = beta.toFixed(1) + '°';
+ 
+ uiLabelCos.innerText = 'cos(β) :';
+ const cosBeta = Math.cos(beta * Math.PI / 180);
+ uiValCos.innerText = cosBeta.toFixed(3);
+ 
+ uiFormula.innerText = 'Projection = -|V| · cos(β)';
+ uiFormula.classList.add('text-yellow-300');
+
+ const signY = projY >= 0 ? '' : '-';
+ uiFormulaY.innerHTML = (axisTiltDeg === 0 ? 'v<sub>y</sub>' : "v<sub>y'</sub>") + ' = ' + signY + '|V| · sin(β)';
+ } else {
+ uiLabelAngle.innerText = 'α (Angle) :';
+ uiValAngle.innerText = deg.toFixed(1) + '°';
+ 
+ uiLabelCos.innerText = 'cos(α) :';
+ const cosVal = Math.cos(relRad);
+ uiValCos.innerText = cosVal.toFixed(3);
+ 
+ uiFormula.innerText = 'Projection = |V| · cos(α)';
+ uiFormula.classList.remove('text-yellow-300');
+
+ uiFormulaY.innerHTML = (axisTiltDeg === 0 ? 'v<sub>y</sub>' : "v<sub>y'</sub>") + ' = |V| · sin(α)';
+ }
+ 
+ uiProj.innerText = projX.toFixed(1);
+ if (projX < -0.1) {
+ uiProj.classList.remove('text-white', 'text-emerald-400');
+ uiProj.classList.add('text-red-400');
+ } else {
+ uiProj.classList.remove('text-red-400');
+ uiProj.classList.add('text-white');
+ }
+
+ uiProjY.innerText = projY.toFixed(1);
+}
+</script>
+</body>
+</html>
